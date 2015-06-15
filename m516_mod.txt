@@ -1,0 +1,45 @@
+Modified m516
+=============
+
+Instruction formats:
+
+goto:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _|
+  1           address
+
+	Since the majority of literals are used by the pc anyway, why not
+	optimise it? The goto instruction has exactly the same semantics as:
+
+	  pc lit LABEL
+
+	except that goto can only work on the first 32k of memory. Jumping
+	to anywhere in the upper 32k still requires regular literals.
+
+
+16 bit instruction:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _|_ _ _ _ _ _ _|_ _ _ _ _ _ _|
+  0 0      dest          src
+
+	Same as the original m516.
+
+
+packed instruction:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _ _|_|_ _ _|_ _ _|_ _ _|_ _ _|
+  0 1 0    dest  src   dest  src
+
+	The packed instruction now only has access to the first eight
+	registers. This means that the first eight windowed RAM are no
+	longer packable. Therefore the RAM window can be moved to
+	somewhere more sensible if necessary.
+
+
+short literal:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _ _|_ _ _ _ _|_ _ _ _ _ _ _ _|
+  0 1 1    dest      literal
+
+	The short literal is now only 8bit. However the first 32 registers
+	may be written to which is virtually all the special registers.

@@ -1,0 +1,63 @@
+170 0x02b0 ;*a lit
+171 0x0100 ;256
+172 0x0330 ;a lit
+173 0x003f ;63
+174 0x02b0 ;*a lit
+175 0x0101 ;257
+176 0x0330 ;a lit
+177 0x000a ;10
+178 0x02b0 ;*a lit
+179 0x0102 ;258
+180 0x0330 ;a lit
+181 0x000a ;10
+182 0x02b0 ;*a lit
+183 0x0102 ;258
+184 0x0006 ;acu a
+185 0x02b0 ;*a lit
+186 0x0100 ;256
+187 0xd660 ;*a a;a acu
+188 0x02b0 ;*a lit
+189 0x0100 ;256
+190 0x8611 ;acu a;add one
+191 0x0300 ;a acu
+192 0x02b0 ;*a lit
+193 0x0102 ;258
+194 0x8613 ;acu a;add all
+195 0x0300 ;a acu
+196 0x1700 ;+b acu
+197 0x400a ;acu lit; 10
+198 0x00af ;add pc
+199 0x1900 ;ret acu
+200 0x002e ;acu b-
+201 0x1832 ;pcz ret
+202 0x1700 ;+b acu
+203 0x0030 ;acu lit
+204 0xffe8 ;65512
+205 0x00af ;add pc
+206 0x1900 ;ret acu
+207 0x002e ;acu b-
+208 0x17b2 ;pc ret
+209 0x02b0 ;*a lit
+210 0x0101 ;257
+211 0x8613 ;acu a;add all
+212 0x0300 ;a acu
+213 0x1700 ;+b acu
+214 0x400a ;acu lit; 10
+215 0x00af ;add pc
+216 0x1900 ;ret acu
+217 0x002e ;acu b-
+218 0x1832 ;pcz ret
+219 0x1700 ;+b acu
+220 0x0030 ;acu lit
+221 0xffd3 ;65491
+222 0x00af ;add pc
+223 0x1900 ;ret acu
+224 0x002e ;acu b-
+225 0x17b2 ;pc ret
+226 0x1700 ;+b acu
+227 0x0030 ;acu lit
+228 0xfffc ;65532
+229 0x00af ;add pc
+230 0x1900 ;ret acu
+231 0x002e ;acu b-
+232 0x17b2 ;pc ret

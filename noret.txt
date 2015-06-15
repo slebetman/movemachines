@@ -1,0 +1,50 @@
+Modified m516 with no ret.
+==========================
+
+Instruction formats:
+
+16 bit instructions:
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_ _|_ _ _ _ _ _ _|_ _ _ _ _ _ _|
+   0 0     dest          src
+
+Short literal (optional):
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_ _|_ _|_ _ _ _ _ _ _ _ _ _ _ _|
+   0 1 dest      literal
+
+Packed instruction (optional):
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_|_ _ _|_ _ _ _|_ _ _ _|_ _ _ _|
+   1  dest   src     dest    src
+_______________________________________________________________________________
+Register set: (write/read)
+
+00     acu          accumulator
+01     add / one    add / literal value 0x0001
+02     sub / nil    subtract / literal value 0x0000
+03     and / all    bitwise and / literal value 0xffff
+04     or  / rsh    bitwise or / shift right 1 bit
+05     *a           indirect pointer to "a"
+06     a            indirect access to RAM
+07     +a / a-      increment "pa" then write / read then decrement "pa"
+08-0f  m0-m7        windowed RAM 0 to 7
+10-27  m8-m31       windowed RAM 8 to 31
+28     xor / inv    bitwise xor / invert
+29     -a / a+      decrement "pa" then write / read then increment "pa"
+2a     high         MSB of "a"
+2b     low          LSB of "a"
+2c     *b           indirect pointer to "b"
+2d     b            indirect access to RAM
+2e     +b / b-      decrement "pb" then write / read then increment "pb"
+2f     pc           goto / program counter
+30     pcz / lit    goto if zero / literal
+31     pcc / conf   goto if carry / CPU configuration
+32     pcn / stat   goto if not zero / CPU status
+33     *m           pointer to windowed RAM (only top 11 bits used)
+34     bank         RAM banking to achieve 32bit addressing (optional)
+35     bnka         RAM banking for "a", everything else use "bank" (optional)
+36-3f  reserved     for future system functions
+40-5f  unused
+60-7f  reserved     for possible architecture extensions
+

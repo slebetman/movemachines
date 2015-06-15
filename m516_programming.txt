@@ -1,0 +1,63 @@
+Programming Conventions for the m516 CPU
+========================================
+
+
+________________________________________________________________________________
+Progarm Stack:
+
+The m516 has two sets of registers for indirect memory access: "a" and "b".
+Since the "a" registers are more flexible, the "b" registers is conventionally
+used as the program stack. Typically the "ret" value is pushed onto the "b"
+stack, which grows upwards in memory, at the beginning of a subroutine.
+
+Typical example of a subroutine:
+
+	:MY_ROUTINE
+	{
+		+b ret
+		# do something here
+		pc b-
+	}
+
+To reinforce this convention the macros "saveret", "return" and "routine" are
+defined in "m516inc.as" as follows:
+
+	macro saveret
+	{
+		+b ret
+	}
+	macro return
+	{
+		pc b-
+	}
+	macro routine $NAME 
+	{
+		:$NAME
+		saveret
+	}
+
+Therefore, if "m516inc.as" is included, a subroutine can be written as:
+
+	routine MY_ROUTINE
+	{
+		# do something here
+		return
+	}
+
+The "b" stack is also conventionally used to save and restore context as well
+as a general purpose calculation stack. The only caveat is that, since the "b"
+stack is used as the program stack, "*b" must be saved and restored whenever
+it is used to point to somewhere else.
+
+________________________________________________________________________________
+Memory and I/O Access:
+
+The m516 CPU may be implemented with or without chaching. Access to memory may
+be cached on some implementation. This is problematic for I/O access since the
+m516 doesn't have dedicated I/O instructions. Instead, peripheral devices are
+memory mapped. A cache sitting between the CPU and external hardware can make
+read data stale and prevent written data form being transmitted to the hardware.
+To overcome this, the "a" set of registers are never cached.
+
+All I/O access should be done via the "a" set of registers.
+

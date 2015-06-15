@@ -1,0 +1,85 @@
+m516 assembly
+=============
+
+Taking advantage of the generic macro processor, m516 assembly can be made
+to be very simple.
+
+Instruction Format:
+-------------------
+The basic format of an instruction is:
+
+	destination source
+
+A packed instruction is written as:
+
+	destination source; destination source
+
+A literal_value alone on a line is inserted directly into the instruction
+stream:
+
+	literal_value
+
+A literal instruction has "lit" as the source register, followed by a literal
+value:
+
+	destination lit
+	literal_value
+
+However, there are two alternative ways to specify a literal insturction.
+First is to simply write the literal value after "lit":
+
+	destination_register lit literal_value
+
+The second method is to remove "lit" altogether and simply write:
+
+	destination_register literal_value
+
+Basically, if the source_register is not a register but can be identified as a
+literal value instead then the assembler will assume that it is a literal
+instruction.
+
+Literals:
+---------
+Anything that's an integer is a literal. In addition any ASCII character quoted
+in '' is also a literal representing the interger value of that character.
+Integer formats supported are:
+
+	decimal       123
+	hexadecimal   0x7c
+	octal         071
+
+Defines:
+--------
+Defines allows things to be named. This is basically simple string substitution
+but it makes code much more readable. The syntax for a "define" is:
+
+	define name value
+
+A "define" will be recursively resolved (look up other defines if necessary)
+until the resulting value is either a literal or a register name.
+
+Note: This feature actually looks like it belongs to the macro processor and
+indeed defines can be implemented as a macro processing step. But the processing
+of defines is the same as the processing of labels and since we are taking care
+of labels in the assembler proper it makes sense to also handle defines here.
+Note that in general labels cannot be handled by the macro processor since the
+value of a label is its location in the generated instruction stream.
+
+Labels:
+-------
+A label is similar to a define, that is, it is a simple string substitution for
+a literal value. The difference is that the value of a label is its location
+in the generated instruction stream. This facilitates writing control flow code
+by allowing you to refer to sections of code by its label.
+
+The syntax of declaring a label is:
+
+	:label
+
+The syntax for referring to a label is simply:
+
+	label
+
+note that it is without the leading ":".
+
+

@@ -1,0 +1,39 @@
+#m516dev #######################################
+# Device description for repeat.
+################################################
+
+#-----------------------------------------------
+# Implementation of the repeat register.
+#-----------------------------------------------
+
+
+device REPEAT "Repeat" {
+	proc init {} {
+		# don't allow more than 1
+		if {[winfo exists .repeatreg] == 0} {		
+			toplevel .repeatreg
+			wm protocol .repeatreg WM_DELETE_WINDOW REPEATdestroy
+		}
+		global register
+		array set register {
+			repeat 0x0000
+		}
+	}
+	
+	proc kill {} {
+		REPEATdestroy
+	}
+	
+	proc REPEATdestroy {} {
+		global register
+		destroy .repeatreg
+		
+		# memory cleanup:
+		unset register(repeat)
+	}
+	
+	proc repeat {val} {
+		global register
+		
+	}
+}

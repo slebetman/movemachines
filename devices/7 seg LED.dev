@@ -1,0 +1,94 @@
+#mm16dev #######################################
+# Device description for 4 x 7 segmet LED
+################################################
+
+#-----------------------------------------------
+# Interface:
+# Each segment of the 7 segment digit is wired
+# directly to a bit. The advantage is you have
+# full control of what to write to the display.
+# The following is how the 7 segments are wired:
+#
+#     0
+#   1   2
+#     3
+#   4   5
+#     6
+#
+# The 7th bit is mapped to the dot.
+# But this means you need a font table to write
+# numbers. The following is the font table for
+# a 7 segment digit:
+#	0	0x77
+#	1	0x24
+#	2	0x5d
+#	3	0x6d
+#	4	0x2e
+#	5	0x6b
+#	6	0x7b
+#	7	0x25
+#	8	0x7f
+#	9	0x2f
+#	A	0x3f
+#	b	0x7a
+#	C	0x53
+#	d	0x7c
+#	E	0x5b
+#	F	0x1b
+#-----------------------------------------------
+
+device LED7 "7 segment LED" {
+	proc init {} {
+		# don't allow more than 1
+		if {[winfo exists .led7] == 0} {
+			if [attachRamDevice LED7 \
+				"0" nothing {LED7write lcd0} \
+				"1" nothing {LED7write lcd1} \
+				"2" nothing {LED7write lcd2} \
+				"3" nothing {LED7write lcd3}] {
+				toplevel .led7
+				pack [canvas .led7.c -width 170 -height 70 -bg grey55]
+				wm resizable .led7 0 0
+				LED7draw .led7.c lcd3 10 5
+				LED7draw .led7.c lcd2 50 5
+				LED7draw .led7.c lcd1 90 5
+				LED7draw .led7.c lcd0 130 5
+				wm protocol .led7 WM_DELETE_WINDOW LED7destroy
+			}
+		}
+	}
+	
+	proc kill {} {
+		LED7destroy
+	}
+	
+	proc LED7destroy {} {
+		destroy .led7
+		detachRamDevice LED7
+	}
+	
+	proc LED7draw {win name x y} {
+		# 7 segment
+		set n 0
+		foreach coord {{2 0 22 0} {0 5 0 25} {24 5 24 25} {2 30 22 30} \
+				{0 35 0 55} {24 35 24 55} {2 60 22 60} {27 60 28 61}} {
+			set x1 [expr [lindex $coord 0] + $x]
+			set y1 [expr [lindex $coord 1] + $y]
+			set x2 [expr [lindex $coord 2] + $x]
+			set y2 [expr [lindex $coord 3] + $y]
+			$win create line $x1 $y1 $x2 $y2 \
+				-capstyle round -width 6 -fill grey -tags "$name $name.$n"
+			incr n
+		}
+	}
+	
+	proc LED7write {name val {mode 0}} {
+		for {set x 0} {$x < 8} {incr x} {
+			if {[expr $val & (1 << $x)] != 0} {
+				.led7.c itemconfigure $name.$x -fill red
+			} else {
+				.led7.c itemconfigure $name.$x -fill grey
+			}
+		}
+	}
+}

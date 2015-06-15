@@ -1,0 +1,118 @@
+#=============================
+# Test Program
+#=============================
+
+include 516inc.as
+autopack
+
+define LED01   0x200
+define LED23   0x201
+
+define SCRATCH 0x100
+define STACK   0x140
+
+{:INIT
+#point *b to top of stack
+	*b lit STACK
+	*m lit SCRATCH
+
+#----------------------------------------------------
+#use 7 segment lcds memory mapped to 0x200 and 0x201
+
+#note: for subroutines, the comment convention is:
+#(passed via b)[passed via acu]
+
+#clear display
+	*a lit SCRATCH
+	a nil
+	+a nil
+	+a nil
+	+a nil
+	*a lit LED01
+	a nil
+	+a nil
+}
+	
+	goto START
+
+{:FONT_TABLE
+	0x77  // 0
+	0x24  // 1
+	0x5d  // 2
+	0x6d  // 3
+	0x2e  // 4
+	0x6b  // 5
+	0x7b  // 6
+	0x25  // 7
+	0x7f  // 8
+	0x2f  // 9
+	0x3f  // a
+	0x7a  // b
+	0x53  // c
+	0x7c  // d
+	0x5b  // e
+	0x1b  // f
+}
+
+{:INCR_BCD // in[val] out(val)[carry]
+	+b ret
+	add one
+	m7 acu
+	sub lit 10
+	pcc lit $$NEXT
+	ret b-
+	+b nil
+	acu one
+	pc ret
+
+	:$$NEXT
+	ret b-
+	+b m7
+	acu nil
+	pc ret
+}
+macro BCD++ $register {
+	acu $register
+	call INCR_BCD
+	$register b-
+}
+
+
+{:GET_FONT // in[val] out[val]
+	and 0x0f
+	add FONT_TABLE
+	*a acu
+	acu a
+	pc ret
+}
+macro $dest $mode getFont $register {
+	acu $register
+	call GET_FONT
+	*a $dest
+	$mode acu
+}
+
+:START
+
+{:$$LOOP
+
+	#increment number
+	BCD++ m0
+	ifFALSE $$NEXT
+	BCD++ m1
+	ifFALSE $$NEXT
+	BCD++ m2
+	ifFALSE $$NEXT
+	BCD++ m3
+	
+	:$$NEXT
+
+	#display value
+	LED01 low getFont m0
+	LED01 high getFont m1
+	LED23 low getFont m2
+	LED23 high getFont m3
+	
+	goto $$LOOP
+}
+

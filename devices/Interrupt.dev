@@ -1,0 +1,56 @@
+#m516dev #######################################
+# Device description for interrupt registers.
+################################################
+
+#-----------------------------------------------
+# Basic interrupt is supported by 3 registers:
+# rfi, intcon and intstat located at 0x36, 0x37
+# and 0x38 respectively.
+# This device also provides a proc to trigger
+# interrupts. The API is as follows:
+#
+#     interrupt id 
+#
+# where id is a number between 0 and 15.
+#-----------------------------------------------
+
+
+device INTERRUPT "Interrupt" {
+	proc init {} {
+		# don't allow more than 1
+		if {[winfo exists .interrupt] == 0} {		
+			toplevel .interrupt
+			wm protocol .interrupt WM_DELETE_WINDOW INTERRUPTdestroy
+		}
+		global register
+		array set register {
+			intcon  0x0000
+			intstat 0x0000
+			rfi     0x0000
+		}
+	}
+	
+	proc kill {} {
+		INTERRUPTdestroy
+	}
+	
+	proc INTERRUPTdestroy {} {
+		global register
+		destroy .interrupt
+		
+		# memory cleanup:
+		unset register(intcon)
+		unset register(intstat)
+		unset register(rfi)
+	}
+	
+	proc interrupt {id} {
+		global register
+		set id [expr {1<<$id}]
+		if {$register(intcon) & $id} {
+			set register(rfi) $register(pc)
+			set register(intstat) [expr {$register(intstat)|$id}]
+			set register(pc) 0x0002
+		}
+	}
+}

@@ -1,0 +1,83 @@
+m516
+====
+
+Instruction formats:
+
+16 bit instructions:
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_ _|_ _ _ _ _ _ _|_ _ _ _ _ _ _|
+   0 0     dest          src
+
+Short literal (optional):
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_ _|_ _|_ _ _ _ _ _ _ _ _ _ _ _|
+   0 1 dest      literal
+
+Packed instruction (optional):
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_|_ _ _|_ _ _ _|_ _ _ _|_ _ _ _|
+   1  dest   src     dest    src
+
+Note that not all implementations need to support the short literal and the
+packed instruction formats. Specifically, early demo versions may not handle
+these instructions (though they should generate faults). If packed instructions
+and short literals can be handled then bit0 of the "conf" register is set to 1.
+_______________________________________________________________________________
+Register set: (write/read)
+
+00     acu          accumulator
+01     add / one    add / literal value 0x0001
+02     sub / nil    subtract / literal value 0x0000
+03     and / all    bitwise and / literal value 0xffff
+04     or  / rsh    bitwise or / shift right 1 bit
+05     *a           indirect pointer to "a"
+06     a            indirect access to RAM
+07     +a / a-      increment "*a" then write / read then decrement "*a"
+08-0f  m0-m7        windowed RAM 0 to 7
+10-27  m8-m31       windowed RAM 8 to 31
+28     xor / inv    bitwise xor / invert
+29     -a / a+      decrement "*a" then write / read then increment "*a"
+2a     high         MSB of "a"
+2b     low          LSB of "a"
+2c     *b           indirect pointer to "b"
+2d     b            indirect access to RAM
+2e     +b / b-      increment "*b" then write / read then decrement "*b"
+2f     pc           goto / program counter
+30     pcz / lit    goto if zero / literal
+31     pcc / conf   goto if carry / CPU configuration/info
+32     ret          return address of previous write to "pc"
+33     *m           pointer to windowed RAM (only top 11 bits used)
+34     bank         RAM banking to achieve 32bit addressing (optional)
+35     bnka         RAM banking for "a", everything else use "bank" (optional)
+36-3f  reserved     for future system functions
+40-5f  unused
+60-7f  reserved     for possible architecture extensions
+
+_______________________________________________________________________________
+The "conf" register:
+
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_ _ _ _ _ _ _ _ _ _ _ _ _|_|_|_|
+                             . . .
+                             | | |
+                             | | '-- TINY:support short & packed instructions
+                             | |
+                             | '---- BANK:implements RAM banking registers
+                             |
+                             '------ INT:support interrupts
+
+
+_______________________________________________________________________________
+Note: If we don't use registers in 0x60-0x7f range then we may use the bits
+for migration to a 32 bit architecture:
+
+Possible 32 bit instruction format:
+   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  |_ _|_ _|_ _ _ _ _ _ _|_ _ _ _ _._ _|_ _ _ _ _ _ _|_ _ _ _ _ _ _|
+   0 0 1 1     dest           src          dest           src
+
+This proposed 32 bit instruction format would still have the same instruction
+density as 16 bit instructions but registers 60-7f would only be available in
+this format. Furthermore, in 32 bit mode all data and instructions are fully
+32 bits and aligned to 32 bit boundries thereby making the bank registers
+unnecessary and redundant.

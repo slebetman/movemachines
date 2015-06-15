@@ -1,0 +1,44 @@
+m516 Programming Convention.
+============================
+This document proposes a set of conventions for programming the m516 CPU.
+
+The conventions described in this document is primarily meant to ease 
+programming the CPU. By following these conventions the programmer avoids
+constructs which would be hard to maintain and potentially lead to buggy
+code. As an added advantage, code written by others who follow these
+conventions will also be easier to understand.
+
+The secondary, perhaps more important purpose of these conventions is to
+enforce correct usage of registers. Features such as caching which may be
+present in more advanced implementations of m516 may cause unexpected
+behaviors if code is not written correctly. Where this is the case, this
+document provides guidelines on how to properly use the resources of the CPU.
+
+_______________________________________________________________________________
+Memory Access:
+
+The m516 has two sets of registers for general purpose memory access: "a" and
+"b". Both can be used for indirect memory access and both support preincrement
+writes and postdecrement reads. In addition the "a" registers also support
+predecrement write and postincrement read.
+
+    Set "a" registers (address,mnemonic,description):
+
+    05 *a      indirect pointer to "a"
+    06  a      indirect access to RAM
+    07 +a/a-   increment "*a" then write / read then decrement "*a"
+    29 -a/a+   decrement "*a" then write / read then increment "*a"
+
+    Set "b" registers (address,mnemonic,description):
+
+    2c *b      indirect pointer to "b"
+    2d  b      indirect access to RAM
+    2e +b/b-   decrement "*b" then write / read then increment "*b"
+
+_______________________________________________________________________________
+The Program Stack:
+
+The m516 CPU breaks tradition from previous MM family of CPUs by not having
+registers dedicated as the program stack. It's true that even the original mm16
+didn't have a hardware program stack but the register that is conventionally
+used as the program stack have always been named "pst".

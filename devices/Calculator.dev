@@ -1,0 +1,223 @@
+#mm16dev #######################################
+# Device description for a simple calculator.
+# The calculator has a six digit display and
+# a numeric keypad.
+################################################
+
+#-----------------------------------------------
+# Display interface:
+# Each digit of the display is mapped to half
+# of a 16 bit word. Therefore, two digits are
+# mapped to a single word. Use transfer modes
+# to control individual digits.
+# Each segment of the 7 segment digit is wired
+# directly to a bit. The advantage is you have
+# full control of what to write to the display.
+# The following is how the 7 segments are wired:
+#
+#     0
+#   1   2
+#     3
+#   4   5
+#     6
+#
+# The 7th bit is mapped to the dot.
+# But this means you need a font table to write
+# numbers. The following is the font table for
+# a 7 segment digit:
+#	0	0x77
+#	1	0x24
+#	2	0x5d
+#	3	0x6d
+#	4	0x2e
+#	5	0x6b
+#	6	0x7b
+#	7	0x25
+#	8	0x7f
+#	9	0x2f
+#	A	0x3f
+#	b	0x7a
+#	C	0x53
+#	d	0x7c
+#	E	0x5b
+#	F	0x1b
+#-----------------------------------------------
+# Keypad interface:
+# The keypad is mapped to the lower half of a
+# word. Only one row is connected to the bus at
+# any one time. A value must first be written to
+# the keypad to select a row (rows start with 0).
+# The row can then be read from the same location
+# in memory. Each key in a row is mapped to a bit
+# starting from left to right. For example, at
+# row 1, the key for the number 4 is mapped to
+# bit 0 and the plus key is bit 3.
+# The keypad must therefore be scanned one row
+# at a time.
+# The following is the table of keys:
+#
+# bit:   4  3  2  1  0
+# --------------------
+# row 0     c  9  8  7
+# row 1  *  +  6  5  4
+# row 2  /  -  3  2  1
+# row 3     =  .     0
+#-----------------------------------------------
+
+
+device CALC "Calculator" {
+	proc init {} {
+		# don't allow more than 1
+		if {[winfo exists .calc] == 0} {		
+			global calcscan
+			set calcscan 0
+			if [attachRamDevice CALC \
+				"LED 0 & 1" nothing {LED7write lcd0} \
+				"LED 2 & 3" nothing {LED7write lcd1} \
+				"LED 4 & 5" nothing {LED7write lcd2} \
+				"Keypad" {CALCreadKeypad} {CALCwriteKeypad}] {
+				toplevel .calc
+				pack [canvas .calc.c -width 250 -height 70 -bg grey55]
+				wm resizable .calc 0 0
+				LED7draw .calc.c lcd2.1 10 5
+				LED7draw .calc.c lcd2.0 50 5
+				LED7draw .calc.c lcd1.1 90 5
+				LED7draw .calc.c lcd1.0 130 5
+				LED7draw .calc.c lcd0.1 170 5
+				LED7draw .calc.c lcd0.0 210 5
+				pack [frame .calc.f] -fill both
+				
+				set row 0
+				foreach x {
+					{7   8   9   {c 2}}
+					{4   5   6   +   x}
+					{1   2   3   --  /}
+					{{0 2}   .   {= 2}}
+				} {
+					set col 0
+					foreach y $x {
+						set span 1
+						if {[llength $y] > 1} {
+							set span [lindex $y 1]
+							set y [lindex $y 0]
+						}
+						grid [checkbutton .calc.f.b$row$col \
+							-text $y -width 5 -height 2 \
+							-indicatoron 0 -variable calckey($row.$col)] \
+							-row $row -column $col -columnspan $span \
+							-sticky {e w} -padx 2 -pady 2
+						incr col $span
+					}
+					incr row
+				}
+				
+				wm protocol .calc WM_DELETE_WINDOW CALCdestroy
+			}
+		}
+	}
+	
+	proc kill {} {
+		CALCdestroy
+	}
+	
+	proc CALCdestroy {} {
+		destroy .calc
+		detachRamDevice CALC
+		# memory cleanup:
+		foreach x {
+			calckey
+			calcscan
+		} {
+			global $x
+			unset $x
+		}
+		foreach x {
+			LED7draw
+			CALCreadKeypad
+			CALCwriteKeypad
+			LED7write
+		} {
+			rename $x {}
+		}
+	}
+	
+	proc LED7draw {win name x y} {
+		# 7 segment
+		set n 0
+		foreach coord {{2 0 22 0} {0 5 0 25} {24 5 24 25} {2 30 22 30} \
+				{0 35 0 55} {24 35 24 55} {2 60 22 60} {27 60 28 61}} {
+			set x1 [expr [lindex $coord 0] + $x]
+			set y1 [expr [lindex $coord 1] + $y]
+			set x2 [expr [lindex $coord 2] + $x]
+			set y2 [expr [lindex $coord 3] + $y]
+			$win create line $x1 $y1 $x2 $y2 \
+				-capstyle round -width 6 -fill grey -tags "$name $name.$n"
+			incr n
+		}
+	}
+	
+	proc CALCreadKeypad {} {
+		global calckey
+		global calcscan
+		set ret 0
+		
+		set x [array get calckey $calcscan.*]
+		foreach {y val} $x {
+			set bit [lindex [split $y "."] 1]
+			if {$val == 1} {
+				set ret [expr {$ret | (1 << $bit)}]
+			}
+		}
+		
+		return $ret
+	}
+	
+	proc CALCwriteKeypad {val {mode 0}} {
+		global calckey
+		global calcscan
+		set calcscan [expr $val]
+	}
+	
+	proc LED7write {name val {mode 0}} {
+		if {$mode == 0} {
+			for {set x 0} {$x < 8} {incr x} {
+				if {[expr {$val & (1 << $x)}] != 0} {
+					.calc.c itemconfigure $name.0.$x -fill red
+				} else {
+					.calc.c itemconfigure $name.0.$x -fill grey
+				}
+			}
+			for {set x 0} {$x < 8} {incr x} {
+				if {[expr {$val & (1 << ($x+8))}] != 0} {
+					.calc.c itemconfigure $name.1.$x -fill red
+				} else {
+					.calc.c itemconfigure $name.1.$x -fill grey
+				}
+			}
+		} elseif {$mode == 1} {
+			for {set x 0} {$x < 8} {incr x} {
+				if {[expr {$val & (1 << $x)}] != 0} {
+					.calc.c itemconfigure $name.0.$x -fill red
+				} else {
+					.calc.c itemconfigure $name.0.$x -fill grey
+				}
+			}
+		} elseif {$mode == 2} {
+			for {set x 0} {$x < 8} {incr x} {
+				if {[expr {$val & (1 << ($x+8))}] != 0} {
+					.calc.c itemconfigure $name.1.$x -fill red
+				} else {
+					.calc.c itemconfigure $name.1.$x -fill grey
+				}
+			}
+		} elseif {$mode == 3} {
+			for {set x 0} {$x < 8} {incr x} {
+				if {[expr {$val & (1 << $x)}] != 0} {
+					.calc.c itemconfigure $name.0.$x -fill red
+				} else {
+					.calc.c itemconfigure $name.0.$x -fill grey
+				}
+			}
+		}
+	}
+}
