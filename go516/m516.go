@@ -1,12 +1,67 @@
 package main
 
-import "fmt"
-
 type CPU struct {
 	reg       *Registers
 	ram       *Memory
 	instCount int
 }
+
+const (
+	ACU, _ = iota, iota
+	ADD, ONE
+	SUB, NIL
+	AND, ALL
+	OR, RSH
+	Aptr, _
+	A, _
+	PlusA, Aminus
+	M0, _
+	M1, _
+	M2, _
+	M3, _
+	M4, _
+	M5, _
+	M6, _
+	M7, _
+	M8, _
+	M9, _
+	M10, _
+	M11, _
+	M12, _
+	M13, _
+	M14, _
+	M15, _
+	M16, _
+	M17, _
+	M18, _
+	M19, _
+	M20, _
+	M21, _
+	M22, _
+	M23, _
+	M24, _
+	M25, _
+	M26, _
+	M27, _
+	M28, _
+	M29, _
+	M30, _
+	M31, _
+	XOR, INV
+	MinusA, Aplus
+	HIGH, _
+	LOW, _
+	Bptr, _
+	B, _
+	PlusB, Bminus
+	PC, _
+	PCZ, LIT
+	PCC, CONF
+	RET, _
+	Mptr, _
+)
+
+const CARRY = 0x80
 
 func (c *CPU) Decode(instruction Word) {
 	format := instruction >> 14
@@ -32,11 +87,11 @@ func (c *CPU) copy(dst Addr, src Addr) {
 }
 
 func (c *CPU) PC() Word {
-	return c.reg.value["pc"]
+	return c.reg.value[PC]
 }
 
 func (c *CPU) GOTO(address Word) {
-	c.reg.value["pc"] = address
+	c.reg.value[PC] = address
 }
 
 func (c *CPU) Exec() {
@@ -50,96 +105,114 @@ func NewCPU() *CPU {
 	var reg = NewRegisters()
 	var RAM = NewMemory()
 
-	reg.value["carry"] = 0
-	reg.Plain(0x00, "acu")
-	reg.R(0x01, "one", func() Word { return 1 })
-	reg.R(0x02, "nil", func() Word { return 0 })
-	reg.R(0x03, "all", func() Word { return 0xffff })
-	reg.W(0x01, "add", func(v Word) { reg.value["acu"] += v })
-	reg.W(0x02, "sub", func(v Word) { reg.value["acu"] -= v })
-	reg.W(0x03, "and", func(v Word) { reg.value["acu"] &= v })
-	reg.R(0x04, "rsh", func() Word { return reg.value["acu"] >> 1 })
-	reg.W(0x04, "or", func(v Word) { reg.value["acu"] |= v })
-	reg.Plain(0x05, "*a")
-	reg.R(0x28, "inv", func() Word { return reg.value["acu"] ^ 0xffff })
-	reg.W(0x28, "xor", func(v Word) { reg.value["acu"] ^= v })
-	reg.Plain(0x2c, "*b")
-	reg.Plain(0x2f, "pc")
-	reg.W(0x2f, "pc", func(v Word) {
-		reg.value["ret"] = reg.value["pc"]
-		reg.value["pc"] = v
+	reg.value[CARRY] = 0
+	reg.Plain(ACU)
+	reg.R(ONE, func() Word { return 1 })
+	reg.R(NIL, func() Word { return 0 })
+	reg.R(ALL, func() Word { return 0xffff })
+	reg.W(ADD, func(v Word) {
+		var calc int32
+		calc = int32(reg.value[ACU]) + int32(v)
+		if calc > 0xffff {
+			reg.value[CARRY] = 1
+		} else {
+			reg.value[CARRY] = 0
+		}
+		reg.value[ACU] = Word(calc)
 	})
-	reg.Plain(0x32, "ret")
-	reg.Plain(0x33, "*m")
-	reg.W(0x33, "*m", func(v Word) { reg.value["*m"] = v & 0xffe0 })
-	reg.R(0x06, "a", func() Word { return RAM.get(reg.value["*a"]) })
-	reg.W(0x06, "a", func(v Word) { RAM.set(reg.value["*a"], v) })
-	reg.R(0x07, "a-", func() Word {
-		reg.value["*a"]--
-		return RAM.get(reg.value["*a"] + 1)
+	reg.W(SUB, func(v Word) {
+		var calc int32
+		calc = int32(reg.value[ACU]) - int32(v)
+		if calc < 0 {
+			reg.value[CARRY] = 0
+		} else {
+			reg.value[CARRY] = 1
+		}
+		reg.value[ACU] = Word(calc)
 	})
-	reg.W(0x07, "+a", func(v Word) {
-		reg.value["*a"]++
-		RAM.set(reg.value["*a"], v)
+	reg.W(AND, func(v Word) { reg.value[ACU] &= v })
+	reg.R(RSH, func() Word { return reg.value[ACU] >> 1 })
+	reg.W(OR, func(v Word) { reg.value[ACU] |= v })
+	reg.Plain(Aptr)
+	reg.R(INV, func() Word { return reg.value[ACU] ^ 0xffff })
+	reg.W(XOR, func(v Word) { reg.value[ACU] ^= v })
+	reg.Plain(Bptr)
+	reg.Plain(PC)
+	reg.W(PC, func(v Word) {
+		reg.value[RET] = reg.value[PC]
+		reg.value[PC] = v
 	})
-	reg.R(0x29, "a+", func() Word {
-		reg.value["*a"]++
-		return RAM.get(reg.value["*a"] - 1)
+	reg.Plain(RET)
+	reg.Plain(Mptr)
+	reg.W(Mptr, func(v Word) { reg.value[Mptr] = v & 0xffe0 })
+	reg.R(A, func() Word { return RAM.get(reg.value[Aptr]) })
+	reg.W(A, func(v Word) { RAM.set(reg.value[Aptr], v) })
+	reg.R(Aminus, func() Word {
+		reg.value[Aptr]--
+		return RAM.get(reg.value[Aptr] + 1)
 	})
-	reg.W(0x29, "-a", func(v Word) {
-		reg.value["*a"]--
-		RAM.set(reg.value["*a"], v)
+	reg.W(PlusA, func(v Word) {
+		reg.value[Aptr]++
+		RAM.set(reg.value[Aptr], v)
 	})
-	reg.R(0x2a, "high", func() Word {
-		return RAM.get(reg.value["*a"]) >> 8
+	reg.R(Aplus, func() Word {
+		reg.value[Aptr]++
+		return RAM.get(reg.value[Aptr] - 1)
 	})
-	reg.W(0x2a, "high", func(v Word) {
-		mvalue := RAM.get(reg.value["*a"]) & 0x00ff
-		RAM.set(reg.value["*a"], mvalue|(v<<8))
+	reg.W(MinusA, func(v Word) {
+		reg.value[Aptr]--
+		RAM.set(reg.value[Aptr], v)
 	})
-	reg.R(0x2b, "low", func() Word {
-		return RAM.get(reg.value["*a"]) & 0xff
+	reg.R(HIGH, func() Word {
+		return RAM.get(reg.value[Aptr]) >> 8
 	})
-	reg.W(0x2b, "low", func(v Word) {
-		mvalue := RAM.get(reg.value["*a"]) & 0xff00
-		RAM.set(reg.value["*a"], mvalue|(v&0x00ff))
+	reg.W(HIGH, func(v Word) {
+		mvalue := RAM.get(reg.value[Aptr]) & 0x00ff
+		RAM.set(reg.value[Aptr], mvalue|(v<<8))
 	})
-	reg.R(0x2d, "b", func() Word { return RAM.get(reg.value["*b"]) })
-	reg.W(0x2d, "b", func(v Word) { RAM.set(reg.value["*b"], v) })
-	reg.R(0x2e, "b-", func() Word {
-		reg.value["*b"]--
-		return RAM.get(reg.value["*b"] + 1)
+	reg.R(LOW, func() Word {
+		return RAM.get(reg.value[Aptr]) & 0xff
 	})
-	reg.W(0x2e, "+b", func(v Word) {
-		reg.value["*b"]++
-		RAM.set(reg.value["*b"], v)
+	reg.W(LOW, func(v Word) {
+		mvalue := RAM.get(reg.value[Aptr]) & 0xff00
+		RAM.set(reg.value[Aptr], mvalue|(v&0x00ff))
 	})
-	reg.W(0x30, "pcz", func(v Word) {
-		if reg.value["acu"] == 0 {
-			reg.write[reg.addr["pc"]](v)
+	reg.R(B, func() Word { return RAM.get(reg.value[Bptr]) })
+	reg.W(B, func(v Word) { RAM.set(reg.value[Bptr], v) })
+	reg.R(Bminus, func() Word {
+		reg.value[Bptr]--
+		return RAM.get(reg.value[Bptr] + 1)
+	})
+	reg.W(PlusB, func(v Word) {
+		reg.value[Bptr]++
+		RAM.set(reg.value[Bptr], v)
+	})
+	reg.W(PCZ, func(v Word) {
+		if reg.value[ACU] == 0 {
+			reg.write[PC](v)
 		}
 	})
-	reg.R(0x30, "lit", func() Word {
-		reg.value["pc"]++
-		return RAM.get(reg.value["pc"] - 1)
+	reg.R(LIT, func() Word {
+		reg.value[PC]++
+		return RAM.get(reg.value[PC] - 1)
 	})
-	reg.W(0x31, "pcc", func(v Word) {
-		if reg.value["carry"] != 0 {
-			reg.write[reg.addr["pc"]](v)
+	reg.W(PCC, func(v Word) {
+		if reg.value[CARRY] != 0 {
+			reg.write[PC](v)
 		}
 	})
-	reg.R(0x31, "conf", func() Word { return 0x0001 })
-	
+	reg.R(CONF, func() Word { return 0x0001 })
+
 	for i, m := 0x08, 0; i <= 0x27; i, m = i+1, m+1 {
-		reg.R(Addr(i), fmt.Sprintf("m%d",m), func (offset Word) func () Word {
-			return func () Word {
-				return RAM.get(reg.value["*m"] + offset)
+		reg.R(Addr(i), func(offset Word) func() Word {
+			return func() Word {
+				return RAM.get(reg.value[Mptr] + offset)
 			}
 		}(Word(m)))
-		
-		reg.W(Addr(i),fmt.Sprintf("m%d",m), func (offset Word) func (Word) {
-			return func (v Word){
-				RAM.set(reg.value["*m"]+offset,v);
+
+		reg.W(Addr(i), func(offset Word) func(Word) {
+			return func(v Word) {
+				RAM.set(reg.value[Mptr]+offset, v)
 			}
 		}(Word(m)))
 	}

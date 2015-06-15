@@ -5,20 +5,12 @@ import (
 	"os"
 )
 
-var cpu *CPU
-
-func InitAsm(c *CPU) {
-	cpu = c
+func Asm(dst Word, src Word) Word {
+	return (dst << 7) | src
 }
 
-func Asm(dst string, src string) Word {
-	return (Word(cpu.reg.addr[dst]) << 7) | Word(cpu.reg.addr[src])
-}
-
-func Asmlit(dst string, val Word) Word {
-	destination := Word(cpu.reg.addr[dst])
-
-	if destination > 0x03 {
+func Asmlit(dst Word, val Word) Word {
+	if dst > 0x03 {
 		fmt.Println("dst out of range")
 		os.Exit(1)
 	}
@@ -27,5 +19,5 @@ func Asmlit(dst string, val Word) Word {
 		os.Exit(1)
 	}
 
-	return 0x4000 | (destination << 12) | val
+	return 0x4000 | (dst << 12) | val
 }

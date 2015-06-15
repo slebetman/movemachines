@@ -58,20 +58,14 @@ RAM.clear();
 
 var decode = (function(){
 	function copy (dst,src) {
+		instCount ++;
 		var val = reg[src].read();
 		reg[dst].write(val);
-		////////////////////////////////////////// this is slow!
-		// if (reg[src].name.read == 'lit') {
-		// 	return [reg[dst].name.write,reg[src].name.read, val].join(' ');
-		// }
-		// else {
-		// return [reg[dst].name.write,reg[src].name.read].join(' ');
-		// }
 	}
 	
 	function literal (dst,val) {
+		instCount ++;
 		reg[dst].write(val);
-		// return [reg[dst].name.write,'lit',val].join(' ');
 	}
 	
 	return function (word) {
@@ -79,19 +73,16 @@ var decode = (function(){
 		
 		if (format == 0) {
 			// 16 bit instruction
-			return copy((word >> 7) & 0x7f, word & 0x7f);
+			copy((word >> 7) & 0x7f, word & 0x7f);
 		}
 		else if (format == 1) {
 			// short literal
-			return literal((word >> 12) & 0x03, word & 0x0fff);
+			literal((word >> 12) & 0x03, word & 0x0fff);
 		}
 		else {
-			instCount ++;
 			// packed instruction
-			//return [
-				copy((word >> 12) & 0x07, (word >> 8) & 0x0f),
-				copy((word >> 4) & 0x0f, word & 0x0f)
-			//].join(','); //////////////// join is slow!
+			copy((word >> 12) & 0x07, (word >> 8) & 0x0f),
+			copy((word >> 4) & 0x0f, word & 0x0f)
 		}
 	}
 })();
@@ -124,8 +115,26 @@ reg.carry = 0;
 R(0x01,'one',function(){return 0x0001});
 R(0x02,'nil',function(){return 0x0000});
 R(0x03,'all',function(){return 0xffff});
-W(0x01,'add',function(v){reg.acu += v});
-W(0x02,'sub',function(v){reg.acu -= v});
+W(0x01,'add',function(v){
+	reg.acu += v;
+	if (reg.acu > 0xffff) {
+		reg.carry = 1;
+	}
+	else {
+		reg.carry = 0;
+	}
+	reg.acu &= 0xffff;
+});
+W(0x02,'sub',function(v){
+	reg.acu -= v;
+	if (reg.acu < 0) {
+		reg.carry = 0;
+	}
+	else {
+		reg.carry = 1;
+	}
+	reg.acu &= 0xffff;
+});
 W(0x03,'and',function(v){reg.acu &= v});
 R(0x04,'rsh',function(){return reg.acu >> 1});
 W(0x04,'or',function(v){reg.acu |= v});
@@ -134,7 +143,7 @@ R(0x28,'inv',function(){return reg.acu ^ 0xffff});
 W(0x28,'xor',function(v){reg.acu ^= v});
 plainRegister(0x2c,'*b');
 plainRegister(0x2f,'pc');
-W(0x2f,'pc',function(v){reg.ret = reg.pc; reg.pc = v});
+W(0x2f,'pc',function(v){reg.ret = reg.pc; reg.pc = v & 0xffff});
 plainRegister(0x32,'ret');
 plainRegister(0x33,'*m');
 W(0x33,'*m',function(v){reg['*m'] = v & 0xffe0});
@@ -210,7 +219,6 @@ for (var i=0x08,m=0;i<=0x27;i++,m++) {
 }
 
 function exec () {
-	instCount ++;
 	var pc = reg.pc;
 	var instruction = RAM[pc];
 	reg.pc ++;

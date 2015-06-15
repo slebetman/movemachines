@@ -19,7 +19,7 @@ func (m *Memory) get(addr Word) Word {
 
 func (m *Memory) set(addr Word, val Word) {
 	m.value[addr] = val
-	m.observer(addr,val)
+	m.observer(addr, val)
 }
 
 func (m *Memory) load(dat []Word) {
