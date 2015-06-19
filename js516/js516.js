@@ -73,7 +73,7 @@ var decode = (function(){
 		
 		if (format == 0) {
 			// 16 bit instruction
-			copy((word >> 7) & 0x7f, word & 0x7f);
+			copy(word >> 7, word & 0x7f);
 		}
 		else if (format == 1) {
 			// short literal
@@ -143,7 +143,7 @@ R(0x28,'inv',function(){return reg.acu ^ 0xffff});
 W(0x28,'xor',function(v){reg.acu ^= v});
 plainRegister(0x2c,'*b');
 plainRegister(0x2f,'pc');
-W(0x2f,'pc',function(v){reg.ret = reg.pc; reg.pc = v & 0xffff});
+W(0x2f,'pc',function(v){reg.ret = reg.pc; reg.pc = v});
 plainRegister(0x32,'ret');
 plainRegister(0x33,'*m');
 W(0x33,'*m',function(v){reg['*m'] = v & 0xffe0});
@@ -222,7 +222,7 @@ function exec () {
 	var pc = reg.pc;
 	var instruction = RAM[pc];
 	reg.pc ++;
-	return [pc, decode(instruction)];
+	decode(instruction);
 }
 
 function hex (n,digits) {
