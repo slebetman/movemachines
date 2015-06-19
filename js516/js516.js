@@ -20,6 +20,7 @@ Array.prototype.stride = function(callback,undef) {
 var instCount = 0;
 var reg = [];
 var PC = 0;
+var ACU = 0;
 
 var dummy = {
 	read : function () {return 0x0000},
@@ -111,37 +112,39 @@ function plainRegister (addr, name) {
 	W(addr,name,function(v){reg[name] = v});
 }
 
-plainRegister(0x00,'acu');
+// plainRegister(0x00,'acu');
+R(0x00,'acu',function(){return ACU});
+W(0x00,'acu',function(v){ACU = v});
 reg.carry = 0;
 R(0x01,'one',function(){return 0x0001});
 R(0x02,'nil',function(){return 0x0000});
 R(0x03,'all',function(){return 0xffff});
 W(0x01,'add',function(v){
-	reg.acu += v;
-	if (reg.acu > 0xffff) {
+	ACU += v;
+	if (ACU > 0xffff) {
 		reg.carry = 1;
 	}
 	else {
 		reg.carry = 0;
 	}
-	reg.acu &= 0xffff;
+	ACU &= 0xffff;
 });
 W(0x02,'sub',function(v){
-	reg.acu -= v;
-	if (reg.acu < 0) {
+	ACU -= v;
+	if (ACU < 0) {
 		reg.carry = 0;
 	}
 	else {
 		reg.carry = 1;
 	}
-	reg.acu &= 0xffff;
+	ACU &= 0xffff;
 });
-W(0x03,'and',function(v){reg.acu &= v});
-R(0x04,'rsh',function(){return reg.acu >> 1});
-W(0x04,'or',function(v){reg.acu |= v});
+W(0x03,'and',function(v){ACU &= v});
+R(0x04,'rsh',function(){return ACU >> 1});
+W(0x04,'or',function(v){ACU |= v});
 plainRegister(0x05,'*a');
-R(0x28,'inv',function(){return reg.acu ^ 0xffff});
-W(0x28,'xor',function(v){reg.acu ^= v});
+R(0x28,'inv',function(){return ACU ^ 0xffff});
+W(0x28,'xor',function(v){ACU ^= v});
 plainRegister(0x2c,'*b');
 plainRegister(0x2f,'pc');
 W(0x2f,'pc',function(v){reg.ret = PC; PC = v});
@@ -191,7 +194,7 @@ W(0x2e,'+b',function(v){
 	RAM.set(reg['*b'],v);
 });
 W(0x30,'pcz',function(v){
-	if (reg.acu == 0) {
+	if (ACU == 0) {
 		reg[reg.address.pc].write(v);
 	}
 });
