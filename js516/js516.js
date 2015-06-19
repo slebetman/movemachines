@@ -343,15 +343,15 @@ loadRAM(program2);
 RAM.onchange = function (i,v) {
 	// Amazingly this is fast!
 	if (i == reg['*m']) {
-		process.stdout.write(GOTO(0,1) + 'm0 = ' + hex(v) + '  ');
+		process.stdout.write('\rm0 = ' + hex(v) + '  ');
 	}
 };
  
-// var start = Date.now();
-// while (reg.pc < 20) {
-// 	exec();
-// }
-// var end = Date.now();
+var start = Date.now();
+while (reg.pc < 20) {
+	exec();
+}
+var end = Date.now();
 
 
 
@@ -365,7 +365,7 @@ function freq (hz) {
 	if (hz < 1000) return hz.toFixed(2) + ' GHz';
 }
 
-// console.log(freq(instCount/((end-start)/1000)));
+console.log(freq(instCount/((end-start)/1000)));
 
 function dumpRAM (from,to) {
 	return RAM.slice(from,to+1).map(hex.format(4)).stride(function(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) {
@@ -373,40 +373,40 @@ function dumpRAM (from,to) {
 	}).join("\n");
 }
 
-// console.log(dumpRAM(0,0xff));
+console.log(dumpRAM(0,0xff));
 
-clear();
-
-var start = Date.now();
-function loop () {
-	for (var i=10000000;i--;) exec();
-	// if (reg.pc >= 20) {
-	// 	var end = Date.now();
-	// 	console.log(freq(instCount/((end-start)/1000)));
-	// }
-	// else {
-		setTimeout(loop,0);
-	// }
-}
-loop();
-
-setInterval(function(){
-	process.stdout.write(GOTO(0,2) + freq(instCount) + '  ');
-	instCount = 0;
-},2000);
-
-function ESC (txt) {
-	return '\x1b' + txt;
-}
-
-function ESC_ (txt) {
-	return ESC('[');
-}
-
-function GOTO (x, y) {
-	return ESC('[' + y + ';' + x + 'H');
-}
-
-function clear () {
-	process.stdout.write(ESC('[2J'));
-}
+// clear();
+// 
+// var start = Date.now();
+// function loop () {
+// 	for (var i=10000000;i--;) exec();
+// 	// if (reg.pc >= 20) {
+// 	// 	var end = Date.now();
+// 	// 	console.log(freq(instCount/((end-start)/1000)));
+// 	// }
+// 	// else {
+// 		setTimeout(loop,0);
+// 	// }
+// }
+// loop();
+// 
+// setInterval(function(){
+// 	process.stdout.write(GOTO(0,2) + freq(instCount/2) + '  ');
+// 	instCount = 0;
+// },2000);
+// 
+// function ESC (txt) {
+// 	return '\x1b' + txt;
+// }
+// 
+// function ESC_ (txt) {
+// 	return ESC('[');
+// }
+// 
+// function GOTO (x, y) {
+// 	return ESC('[' + y + ';' + x + 'H');
+// }
+// 
+// function clear () {
+// 	process.stdout.write(ESC('[2J'));
+// }
