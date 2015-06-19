@@ -19,6 +19,7 @@ Array.prototype.stride = function(callback,undef) {
 
 var instCount = 0;
 var reg = [];
+var PC = 0;
 
 var dummy = {
 	read : function () {return 0x0000},
@@ -143,7 +144,7 @@ R(0x28,'inv',function(){return reg.acu ^ 0xffff});
 W(0x28,'xor',function(v){reg.acu ^= v});
 plainRegister(0x2c,'*b');
 plainRegister(0x2f,'pc');
-W(0x2f,'pc',function(v){reg.ret = reg.pc; reg.pc = v});
+W(0x2f,'pc',function(v){reg.ret = PC; PC = v});
 plainRegister(0x32,'ret');
 plainRegister(0x33,'*m');
 W(0x33,'*m',function(v){reg['*m'] = v & 0xffe0});
@@ -195,8 +196,8 @@ W(0x30,'pcz',function(v){
 	}
 });
 R(0x30,'lit',function(){
-	reg.pc++;
-	return RAM[reg.pc-1];
+	PC++;
+	return RAM[PC-1];
 });
 W(0x31,'pcc',function(v){
 	if (reg.carry) {
@@ -219,9 +220,8 @@ for (var i=0x08,m=0;i<=0x27;i++,m++) {
 }
 
 function exec () {
-	var pc = reg.pc;
-	var instruction = RAM[pc];
-	reg.pc ++;
+	var instruction = RAM[PC];
+	PC ++;
 	decode(instruction);
 }
 
@@ -348,7 +348,7 @@ RAM.onchange = function (i,v) {
 };
  
 var start = Date.now();
-while (reg.pc < 20) {
+while (PC < 20) {
 	exec();
 }
 var end = Date.now();
