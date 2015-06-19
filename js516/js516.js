@@ -21,6 +21,8 @@ var instCount = 0;
 var reg = [];
 var PC = 0;
 var ACU = 0;
+var RET = 0;
+var A_PTR = 0;
 
 var dummy = {
 	read : function () {return 0x0000},
@@ -142,46 +144,50 @@ W(0x02,'sub',function(v){
 W(0x03,'and',function(v){ACU &= v});
 R(0x04,'rsh',function(){return ACU >> 1});
 W(0x04,'or',function(v){ACU |= v});
-plainRegister(0x05,'*a');
+// plainRegister(0x05,'*a');
+R(0x05,'*a',function(){return A_PTR});
+W(0x05,'*a',function(v){A_PTR = v});
 R(0x28,'inv',function(){return ACU ^ 0xffff});
 W(0x28,'xor',function(v){ACU ^= v});
 plainRegister(0x2c,'*b');
 plainRegister(0x2f,'pc');
-W(0x2f,'pc',function(v){reg.ret = PC; PC = v});
-plainRegister(0x32,'ret');
+W(0x2f,'pc',function(v){RET = PC; PC = v});
+//plainRegister(0x32,'ret');
+R(0x32,'ret',function(){return RET});
+W(0x32,'ret',function(v){RET = v});
 plainRegister(0x33,'*m');
 W(0x33,'*m',function(v){reg['*m'] = v & 0xffe0});
-R(0x06,'a',function(){return RAM[reg['*a']]});
-W(0x06,'a',function(v){RAM.set(reg['*a'],v)});
+R(0x06,'a',function(){return RAM[A_PTR]});
+W(0x06,'a',function(v){RAM.set(A_PTR,v)});
 R(0x07,'a-',function(){
-	reg['*a']--;
-	return RAM[reg['*a']+1];
+	A_PTR--;
+	return RAM[A_PTR+1];
 });
 W(0x07,'+a',function(v){
-	reg['*a']++;
-	RAM.set(reg['*a'],v);
+	A_PTR++;
+	RAM.set(A_PTR,v);
 });
 R(0x29,'a+',function(){
-	reg['*a']++;
-	return RAM[reg['*a']-1];
+	A_PTR++;
+	return RAM[A_PTR-1];
 });
 W(0x29,'-a',function(v){
-	reg['*a']--;
-	RAM.set(reg['*a'],v);
+	A_PTR--;
+	RAM.set(A_PTR,v);
 });
 R(0x2a,'high',function(){
-	return (RAM[reg['*a']] >> 8) & 0x00ff;
+	return (RAM[A_PTR] >> 8) & 0x00ff;
 });
 W(0x2a,'high',function(v){
-	var mval = RAM[reg['*a']] & 0x00ff;
-	RAM[reg['*a']] = mval | ((v << 8) & 0xff00);
+	var mval = RAM[A_PTR] & 0x00ff;
+	RAM[A_PTR] = mval | ((v << 8) & 0xff00);
 });
 R(0x2b,'low',function(){
-	return RAM[reg['*a']] & 0x00ff;
+	return RAM[A_PTR] & 0x00ff;
 });
 W(0x2b,'low',function(v){
-	var mval = RAM[reg['*a']] & 0xff00;
-	RAM[reg['*a']] = mval | (v & 0x00ff);
+	var mval = RAM[A_PTR] & 0xff00;
+	RAM[A_PTR] = mval | (v & 0x00ff);
 });
 R(0x2d,'b',function(){return RAM[reg['*b']]});
 W(0x2d,'b',function(v){RAM.set(reg['*b'],v)});
