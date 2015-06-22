@@ -23,6 +23,7 @@ var PC = 0;
 var ACU = 0;
 var RET = 0;
 var A_PTR = 0;
+var CARRY = 0;
 
 var dummy = {
 	read : function () {return 0x0000},
@@ -117,27 +118,26 @@ function plainRegister (addr, name) {
 // plainRegister(0x00,'acu');
 R(0x00,'acu',function(){return ACU});
 W(0x00,'acu',function(v){ACU = v});
-reg.carry = 0;
 R(0x01,'one',function(){return 0x0001});
 R(0x02,'nil',function(){return 0x0000});
 R(0x03,'all',function(){return 0xffff});
 W(0x01,'add',function(v){
 	ACU += v;
 	if (ACU > 0xffff) {
-		reg.carry = 1;
+		CARRY = 1;
 	}
 	else {
-		reg.carry = 0;
+		CARRY = 0;
 	}
 	ACU &= 0xffff;
 });
 W(0x02,'sub',function(v){
 	ACU -= v;
 	if (ACU < 0) {
-		reg.carry = 0;
+		CARRY = 0;
 	}
 	else {
-		reg.carry = 1;
+		CARRY = 1;
 	}
 	ACU &= 0xffff;
 });
@@ -201,7 +201,7 @@ W(0x2e,'+b',function(v){
 });
 W(0x30,'pcz',function(v){
 	if (ACU == 0) {
-		reg[reg.address.pc].write(v);
+		RET = PC; PC = v
 	}
 });
 R(0x30,'lit',function(){
@@ -209,8 +209,8 @@ R(0x30,'lit',function(){
 	return RAM[PC-1];
 });
 W(0x31,'pcc',function(v){
-	if (reg.carry) {
-		reg[reg.address.pc].write(v);
+	if (CARRY) {
+		RET = PC; PC = v
 	}
 });
 R(0x31,'conf',function(){return 0x0001});
@@ -382,7 +382,7 @@ function dumpRAM (from,to) {
 	}).join("\n");
 }
 
-console.log(dumpRAM(0,0xff));
+// console.log(dumpRAM(0,0xff));
 
 // clear();
 // 
