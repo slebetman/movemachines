@@ -1,0 +1,57 @@
+MM16 OS
+-------
+
+task_struct {
+	0 id
+	1 priority
+	2 current_priority
+	3
+	4
+	5
+	6 prev_task_struct_ptr
+	7 next_task_struct_ptr
+	8-15 saved_regs
+	16-79 page_table
+}
+
+saved_regs {
+	0 psp
+	1 acu
+	2 stp
+	3 mpa
+	4 mpb
+	5 cpucon
+	6 pg
+	7
+}
+
+page_table {
+	0-63 physical_address
+}
+
+Note: 2 physical address are stored in each word of memory since each address
+is only 7 bits. For example, virtual address 101 is the second byte of word 50.
+The value 0x80, 0x81 and 0xff are special. 0xff means that the page is
+unallocated. 0x80 means that the page is allocated but not in ram while 0x81
+means that the page is located within the executable file but not in ram.
+
+Total of 80 bytes per task. We can comfortably fit 6 tasks per page.
+_______________________________________________________________________________
+Operating Environment.
+
+All tasks assume that the OS is not there. Tasks start executing at address
+0x0000 which is mapped by the OS to a page containing the executable code.
+Tasks simply sees a plain MM16 machine with 64k of RAM.
+
+To start a task, the OS must first copy at least the first page of the task
+into memory. Then, after enabling USR and PGE and after writing the process id
+to the pg register, the OS starts the task by writing 0x0000 to retfie.
+
+When the CPU attempts to access address 0x0000 a page fault immediately occurs.
+The page fault handler then maps address 0x0000 to the page containing the
+executable code.
+
+An alternative is to start the process without copying the task in memory but
+mark the page table with 0x81. Then let the page fault handler copy the page.
+
+

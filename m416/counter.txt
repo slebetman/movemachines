@@ -1,0 +1,113 @@
+;=============================
+; Test Program
+;=============================
+
+;point mpa and mpb to more sensible locations
+	mpa = lit 0x100
+	mpb = lit 0x200
+
+;now point the stacks to more sensible locations
+	psp = lit 0x120
+	stp = lit 0x130
+
+;----------------------------------------------------
+;use 7 segment lcds memory mapped to 0x200 - 0x203
+
+;note: for subroutines, the comment convention is:
+;(passed via pst)[passed via acu]
+
+	goto START
+
+:FONT_TABLE
+	0x77;  /* 0 */
+	0x24;  /* 1 */
+	0x5d;  /* 2 */
+	0x6d;  /* 3 */
+	0x2e;  /* 4 */
+	0x6b;  /* 5 */
+	0x7b;  /* 6 */
+	0x25;  /* 7 */
+	0x7f;  /* 8 */
+	0x2f;  /* 9 */
+	0x3f;  /* a */
+	0x7a;  /* b */
+	0x53;  /* c */
+	0x7c;  /* d */
+	0x5b;  /* e */
+	0x1b;  /* f */
+
+:START
+
+;clear display
+	mb0 = lit 0
+	mb1 = mb0
+	mb2 = mb0
+	mb3 = mb0
+	ma0 = mb0
+	ma1 = mb0
+	ma2 = mb0
+	ma3 = mb0
+
+:LOOP
+	acu = ma0
+	acu = inc
+	and = lit 0x0f
+	ma0 = acu
+	add = lit 10
+	stp = acu
+	mb0 = std
+	
+	;increment number
+	acu = ma0
+	call = INCR_BCD
+	ma0 = pst
+	pc z= next
+	acu = ma1
+	call = INCR_BCD
+	ma1 = pst
+	pc z= next
+	acu = ma2
+	call = INCR_BCD
+	ma2 = pst
+	pc z= next
+	acu = ma3
+	call = INCR_BCD
+	ma3 = pst
+	
+	:next
+	;display value
+	acu = ma0
+	call = GET_FONT
+	mb0 - acu
+	acu = ma1
+	call = GET_FONT
+	mb0 \ acu
+	acu = ma2
+	call = GET_FONT
+	mb1 - acu
+	acu = ma3
+	call = GET_FONT
+	mb1 \ acu
+	
+	goto LOOP
+
+:INCR_BCD ;in[val] out(val)[carry]
+	acu = inc
+	ma15 = acu
+	sub = 10
+	pc c= next
+	pst = ma15
+	acu = lit 0
+	pc = ret
+	:next
+	pst = lit 0
+	acu = lit 1
+	pc = ret
+
+:GET_FONT ;in[val] out[val]
+	and = 0x0f
+	add = FONT_TABLE
+	stp = acu
+	acu = std
+	pc = ret
+	

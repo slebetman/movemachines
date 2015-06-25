@@ -1,0 +1,74 @@
+
+16 bit instruction:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _|_ _|_ _ _ _ _|_ _ _ _ _|
+  0  cond  .    dest       src
+           |
+          mode
+
+
+8 bit packed:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _|_ _ _ _|_ _ _ _|_ _ _ _|
+  1  dest   src     dest    src
+
+
+
+short 10 bit literal:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _ _|_ _ _|_ _ _ _ _ _ _ _ _ _|
+  0 1 1  dest      literal
+
+
+
+Alternative register set:
+     ____________
+ 00 |            |  acu - accumulator
+ 01 |    ALU     |  add / one
+ 02 |            |  and / nil
+ 03 |            |  or  / all
+ 04 |____________|  xor / rsh
+ 05 |            |  p - general purpose pointer
+ 06 |            |  d - data: read/write to pointer location
+ 07 |____________|  stak - stack: (--read/write++) access to pointer location
+ 08 |____________|  heap - heap: (read++/--write) access to pointer location
+ 09 |            |
+    .            .
+    .    RAM     .  r0 - r6: general purpose registers
+    .            .
+ 0f |____________|
+ 10 |____________|  loop / lit - loop(write)/literal(read)
+ 11 |            |  pc  - program counter
+ 12 |    PC      |  ret - subroutine return address
+ 13 |            |  psp - program stack pointer
+ 14 |____________|  pst - program stack
+ 15 |            |
+    .            .
+    .  i/o etc   .
+    .            .
+    .            .
+ 1f |____________|
+
+
+Fast memcpy:
+
+	p [source_address]
+	psp = lit dest_address
+	loop = lit num_words
+		pst = heap
+
+6 words, num_words + 3 instruction cycles
+
+
+Full, state saving fast memcpy:
+
+	r6 = p
+	r5 = psp
+	p [source_address]
+	psp = lit dest_address
+	loop = lit num_words
+		pst = heap
+	psp = r5
+	p = r6
+
+10 words, num_words + 7 instruction cycles

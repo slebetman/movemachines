@@ -1,0 +1,214 @@
+Proposal using only 1 windowed ram and some registers:
+
+     ____________
+ 00 |            |  acu - accumulator
+ 01 |    ALU     |  add / inc
+ 02 |            |  sub / inv    ALU registers have different behaviours
+ 03 |            |  and / rsh    when written to or read from.
+ 04 |            |  or  / rs2
+ 05 |____________|  xor / ls2
+ 06 |            |  stp - general purpose stack pointer
+ 07 |            |  stk - general purpose stack
+ 08 |____________|  std - stack data: read/write access to top of stack
+ 09 |            |
+    .            .
+    .    RAM     .  r0 - r6 (general purpose registers)
+    .            .
+ 0f |____________|
+ 10 |            |  pc  - program counter
+ 11 |    PC      |  ret - subroutine return address
+ 12 |            |  psp - program stack pointer
+ 13 |____________|  pst - program stack
+ 14 |______|_____   mp  - pointer to ram window (only upper 11 bits are used)
+ 15 |____________|  lit - literal (read only)
+ 16 |            |
+    .            .
+    .  i/o etc   .
+    .            .
+    .            .
+ 1f |____________|
+ 20 |            |
+    .            .
+    .            .
+    .    RAM     .
+    .            .  m0 - m31 (windowed ram access)
+    .            .
+ 3f |____________|
+
+
+Since ma0-ma7 is usually used as registers anyway, they are replaced with real
+registers. The stack pointer, stp, is moved up to allow pointer chasing and
+array manipulation to be done using 8 bit packed instructions.
+
+
+####################################################
+# Example Code:
+# Heapsort
+# Subroutine accepts the address of the array in r0
+# and the length of the array in r1
+####################################################
+
+: HEAP_SORT
+define ARRAY r0
+define n r1
+define i r2
+define parent r3
+define child r4
+define t r5
+define ONE r6
+	
+1	pst = ret
+3	ONE = 1
+4	acu = n; i = rsh
+: LOOP0
+5	acu = i
+7	pc z= NEXT0
+8	sub = ONE; i = acu
+9	add = ARRAY; stp = acu
+10	t = std
+12	pc = NEXT3
+: NEXT0
+13	acu = n; sub = ONE
+14	pc z= pst # RETURN
+15	n = acu
+16	add = ARRAY; stp = ARRAY
+17	m0 = std
+18	stp = acu; t = std
+19	std = m0
+: NEXT3
+20	parent = i
+21	acu = i; add = i
+22	add = ONE; child = acu
+
+: LOOP1
+23	acu = n; sub = child
+25	pc nc= NEXT1
+26	sub = ONE
+28	pc nc= NEXT2
+29	acu = child; add = ONE
+30	stp = acu; acu = std
+31	stp = child; sub = std
+33	pc nc= NEXT2
+34	acu = child; add = ONE
+35	child = acu
+: NEXT2
+36	stp = child; acu = std
+37	sub = t
+39	pc nc= NEXT1
+40	stp = child; acu = std
+41	stp = parent; std = acu
+42	parent = child
+43	acu = parent; add = parent
+44	add = 1; child = acu
+46	pc = LOOP1
+: NEXT1
+47	stp = parent; std = t
+49	pc = LOOP0
+
+# 49 words total, 28% code space savings.
+________________________________________________________________________________
+Another option is to demote the stack in favor of the stack pointer. This
+improves array manipulation and pointer chasing.
+
+     ____________
+ 00 |            |  acu - accumulator
+ 01 |    ALU     |  add / inc
+ 02 |            |  sub / inv    ALU registers have different behaviours
+ 03 |            |  and / rsh    when written to or read from.
+ 04 |            |  or  / rs2
+ 05 |____________|  xor / ls2
+ 06 |            |  std - stack data: read/write access to top of stack
+ 07 |____________|  stp - general purpose stack pointer
+ 08 |            |
+    .            .
+    .    RAM     .  ma0 - ma7 (windowed ram access)
+    .            .
+ 0f |____________|
+ 10 |            |  pc  - program counter
+ 11 |    PC      |  ret - subroutine return address
+ 12 |            |  psp - program stack pointer
+ 13 |____________|  pst - program stack
+ 14 |____________|  stk - general purpose stack
+ 15 |_________|     mpa - pointer to ram window (only upper 13 bits are used)
+ 16 |______|_____   mpb - pointer to ram window (only upper 11 bits are used)
+ 17 |____________|  lit - literal (read only)
+ 18 |            |
+    .            .
+    .  i/o etc   .
+    .            .
+    .            .
+ 1f |____________|
+ 20 |            |
+    .            .
+    .            .
+    .    RAM     .
+    .            .  mb0 - mb31 (windowed ram access)
+    .            .
+ 3f |____________|
+
+
+####################################################
+# Example Code 4:
+# Heapsort
+# Subroutine accepts the address of the array in ma0
+# and the length of the array in ma1
+####################################################
+
+: HEAP_SORT
+define ARRAY ma0
+define n ma1
+define i ma2
+define parent ma3
+define child ma4
+define t ma5
+define ONE ma6
+	
+1	pst = ret
+3	ONE = 1
+4	acu = n; i = rsh
+: LOOP0
+5	acu = i
+7	pc z= NEXT0
+8	sub = ONE; i = acu
+9	add = ARRAY; stp = acu
+10	t = std
+12	pc = NEXT3
+: NEXT0
+13	acu = n; sub = ONE
+14	pc z= pst
+15	n = acu
+16	add = ARRAY; stp = ARRAY
+17	ma7 = std
+18	stp = acu; t = std
+19	std = ma7
+: NEXT3
+20	parent = i
+21	acu = i; add = i
+22	add = ONE; child = acu
+
+: LOOP1
+23	acu = n; sub = child
+25	pc nc= NEXT1
+26	sub = ONE
+28	pc nc= NEXT2
+29	acu = child; add = ONE
+30	stp = acu; acu = std
+31	stp = child; sub = std
+33	pc nc= NEXT2
+34	acu = child; add = ONE
+35	child = acu
+: NEXT2
+36	stp = child; acu = std
+37	sub = t
+39	pc nc= NEXT1
+40	stp = child; ma7 = std
+41	stp = parent; std = ma7
+42	acu = parent; parent = child
+43	add = parent; add = 1
+44	child = acu
+46	pc = LOOP1
+: NEXT1
+47	stp = parent; std = t
+49	pc = LOOP0
+
+# 49 words total, 28% code space savings.

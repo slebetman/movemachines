@@ -1,0 +1,186 @@
+MM16 - Simple 16bit Move Machine
+================================
+
+Features:
+ - Fully 16 bit data and address bus.
+ - 128k bytes address space for data, 64k words for program.
+ - May be implemented as either Harvard or Von Neuman architecture.
+ - Fully predicated instruction set.
+ - A dedicated hardware for stack access to memory.
+ - Additional dedicated hardware for program stack (total 2 stacks).
+ - Two independent 16 word memory windows (no GPRs).
+ - Memory is always word aligned.
+ - Supports 8 and 16 bit access to data.
+ - Extra 16 register slots for hardware, i/o or future expansion.
+ - Accumulator based ALU.
+ - Full 16 bit literals.
+
+Instruction format:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _|_ _ _ _ _ _|_ _|_ _ _ _ _ _|
+   .  destination  .     source
+   |               |
+   |               |
+  mode         condition
+
+
+modes:
+	00 = 16 bit
+	01 = upper 8 bit for src and lower 8 bit for dest
+	10 = lower 8 bit for src and upper 8 bit for dest
+	11 = lower 8 bit
+
+conditions:
+	00 = always
+	01 = zero
+	10 = not zero
+	11 = carry
+
+________________________________________________________________________________
+Register Map:
+
+The proposed register set is:
+     ____________
+ 00 |____________|  lit - literal (read only)
+ 01 |            |  pc  - program counter
+ 02 |    PC      |  call / ret - subroutine call / return address
+ 03 |            |  psp - program stack pointer
+ 04 |____________|  pst - program stack
+ 05 |            |  acu - accumulator
+ 06 |    ALU     |  add / inc
+ 07 |            |  sub / inv    ALU registers have different behaviours
+ 08 |            |  and / rsh    when written to or read from.
+ 09 |            |  or  / rs2
+ 0a |____________|  xor / ls2
+ 0b |            |  stp - general purpose stack pointer  
+ 0c |            |  stk - general purpose stack
+ 0d |____________|  std - stack data: read/write access to top of stack
+ 0e |________|      mpa (only the upper 12 bits are used)
+ 0f |________|___   mpb (only the upper 12 bits are used)
+ 10 |            |
+    .            .
+    .  i/o etc   .
+    .            .
+    .            .
+ 1f |____________|
+ 20 |            |
+    .            .
+    .    RAM     .
+    .            .  ma0 - ma15 (windowed ram access)
+    .            .
+ 2f |____________|
+ 30 |            |
+    .            .
+    .    RAM     .
+    .            .  mb0 - mb15 (windowed ram access)
+    .            .
+ 3f |____________|
+
+
+This is a machine with a simple 16bit address space. But since data is accessed
+word by word MM16 can access up to 128k bytes of ram. The various 8 bit modes
+effectively acting as the 17th address bit.
+
+Note: The program stack is designed to be implemented as pointing to real RAM
+but may also be implemented as dedicated hardware stack. The general purpose
+stack however, must be implemented as pointing to actual RAM since it is also
+used as indirect access to memory.
+________________________________________________________________________________
+Literals:
+
+If the source register is 'lit' (0x00) then a literal operation takes place.
+The next word in the instruction stream is immediately read as a literal value
+to be transferred. As such, a literal read takes up two words of instructions.
+Depending on implementation, this may take two instruction cycles to complete.
+
+Writing to 'lit' however causes nothing to happen. This overrides the literal
+operation. Therefore, the instruction 0x0000 does not cause the program counter
+to increment twice as with regular literal operation. This may be safely used
+as a form of 'nop' instruction.
+________________________________________________________________________________
+Program Control:
+
+The 'pc' registers allows manipulation of the sequence of instruction. Writing
+to the register causes the program counter to point to a new location thereby
+causing a jump.
+________________________________________________________________________________
+Subroutines:
+
+Subroutine calls are performed by writing to the 'call' register. This causes a
+jump similar to writing to the 'pc' register. There is an additional overhead
+needed for a subroutine call, that is to save the return address onto the
+program stack. This is to allow the subroutine to return. This must be done
+manually.
+
+This must be done from within the subroutine, not at the subroutine call.
+
+The 'ret' register latches the return value every time a value is written to
+'call'. Therefore, it doesn't matter when 'ret' is read as long as it is
+before the next subroutine call.
+
+Returning from a subroutine call is done by popping the program stack and
+writing the value to pc.
+________________________________________________________________________________
+Two ways to get literal values:
+
+If MM16 is implemented as a Harvard architecture, then the only way to read
+literal values is by using the 'lit' register followed by the literal value in
+the instruction stream. This is because Harvard machines have separate address
+spaces for data and instructions.
+
+But if MM16 is implemented as a Von Newman architecture, then it has direct
+data access to program instructions. This allows literals to be stored without
+using the literal instruction and use regular RAM access to read the literal
+value.
+________________________________________________________________________________
+Interrupts:
+
+MM16 may be implemented with interrupt support. The basic register set does not
+define support for interrupt. Therefore interrupt capability is considered an
+optional extension of the MM16 architecture.
+
+A simple interrupt implementation has a single entry point (non vectored) with
+a status register for identifying the source of the interrupt. This is slower
+than vectored interrupt but requires much less hardware to implement. The
+interrupt service routine is always located at a fixed location at 0x0002.
+
+Only a single register (typically at 0x10) is needed to implement up to eight
+sources of interrupts:
+
+   int:              interrupt source
+                       (read only)
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|
+                                  |_|  <------ global interrupt enable
+     interrupt mask                               (when written to)
+     (read / write)
+
+The 16 bit 'int' register is divided into two 8 bit halves. The upper 8 bits
+are used for masking individual interrupt source. The lower 8 bits signals the
+source of the interrupt. The least significant bit of the register controls
+global interrupt enable (GIE). Writing a vlaue of 1 to GIE enables interrupts
+while 0 disables interrupts.
+
+It is possible for more than one source to trigger an interrupt. The interrupt
+service routine is responsible to decode the triggering interrupt source and
+running the appropriate routine in response.
+
+Interrupts are automatically disabled globally upon entering the interrupt
+service routine. Therefore it is necessary to manually re-enable interrupts when
+returning from interrupt by using the GIE bit.
+________________________________________________________________________________
+Interrupts and subroutines:
+
+The main problem with interrupting the MM16 architecture is the possibility of
+corrupting subroutine calls. In MM16, subroutine calls are not atomic due to
+having to save the value of the 'ret' register. A naive implementation would
+overwrite the 'ret' register if a subroutine call is interrupted.
+
+The solution is to prevent interrupts after a subroutine call and before saving
+the 'ret' register. A write to 'call' disables interrupts. A read from 'ret'
+re-enables interrupts depending on global interrupt enable. This mechanism does
+not alter the GIE bit.
+
+Therefore an interrupt has a +1 cycle latency depending on weather it occurs in
+the middle of a subroutine call.
+________________________________________________________________________________

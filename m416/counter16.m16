@@ -1,0 +1,97 @@
+0	0x0e00;mpa = lit point mpa and mpb to more sensible locations
+1	0x100
+2	0x0f00;mpb = lit
+3	0x200
+4	0x0300;psp = lit now point the stacks to more sensible locations
+5	0x120
+6	0x0b00;stp = lit
+7	0x130
+8	0x0100;goto
+9	26;START
+10	0x77;  /* 0 */ :FONT_TABLE
+11	0x24;  /* 1 */
+12	0x5d;  /* 2 */
+13	0x6d;  /* 3 */
+14	0x2e;  /* 4 */
+15	0x6b;  /* 5 */
+16	0x7b;  /* 6 */
+17	0x25;  /* 7 */
+18	0x7f;  /* 8 */
+19	0x2f;  /* 9 */
+20	0x3f;  /* a */
+21	0x7a;  /* b */
+22	0x53;  /* c */
+23	0x7c;  /* d */
+24	0x5b;  /* e */
+25	0x1b;  /* f */
+26	0x3000;mb0 = lit :START - clear display
+27	0x0000
+28	0x3130;mb1 = mb0
+29	0x3230;mb2 = mb0
+30	0x3330;mb3 = mb0
+31	0x2030;ma0 = mb0 initialise numbers
+32	0x2130;ma1 = mb0
+33	0x2230;ma2 = mb0
+34	0x2330;ma3 = mb0
+35	0x0520;acu = ma0 :LOOP
+36	0x0200;call = INCR_BCD
+37	75
+38	0x2004;ma0 = pst
+39	0x0140;pc z= next
+40	57
+41	0x0521;acu = ma1
+42	0x0200;call = INCR_BCD
+43	75
+44	0x2104;ma1 = pst
+45	0x0140;pc z= next
+46	57
+47	0x0522;acu = ma2
+48	0x0200;call = INCR_BCD
+49	75
+50	0x2204;ma2 = pst
+51	0x0140;pc z= next
+52	57
+53	0x0523;acu = ma3
+54	0x0200;call = INCR_BCD
+55	75
+56	0x2304;ma3 = pst
+57	0x0520;acu = ma0 :next
+58	0x0200;call = GET_FONT
+59	90
+60	0xf005;mb0 - acu
+61	0x0521;acu = ma1
+62	0x0200;call = GET_FONT
+63	90
+64	0xb005;mb0 \ acu
+65	0x0522;acu = ma2
+66	0x0200;call = GET_FONT
+67	90
+68	0xf105;mb1 - acu
+69	0x0523;acu = ma3
+70	0x0200;call = GET_FONT
+71	90
+72	0xb105;mb1 \ acu
+73	0x0100;goto LOOP
+74	35
+75	0x0506;acu = inc :INCR_BCD ;in[val] out(val)[carry]
+76	0x2f05;ma15 = acu
+77	0x0700;sub = lit 10
+78	10
+79	0x01c0;pc c= next
+80	85
+81	0x042f;pst = ma15
+82	0x0500;acu = lit 0
+83	0
+84	0x0102;pc = ret
+85	0x0400;pst = lit 0 :next
+86	0
+87	0x0500;acu = lit 1
+88	1
+89	0x0102;pc = ret
+90	0x0800;and = 0x0f :GET_FONT ;in[val] out[val]
+91	0x000f
+92	0x0600;add = FONT_TABLE
+93	10
+94	0x0b05;stp = acu
+95	0x050d;acu = std
+96	0x0102;pc = ret

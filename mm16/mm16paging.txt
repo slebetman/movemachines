@@ -1,0 +1,290 @@
+Simple Paging and Virtual Memory on MM16
+========================================
+Because MM16 is intended to be a multitasking CPU it would be nice to have
+support for paging. It is not really intended for MM16 to have proper virtual
+memory that swaps out to hard disk. Instead we want the OS to be able to manage
+memory that is transparent to the running applications. All applications view
+the machine as having 128kB of RAM and all applications can be written to start
+from location 0x0000. This is why we want paging.
+
+Paging hardware can be complicated because of the need to fetch the page
+location from a table in RAM. But there is a simpler way to do this that does
+not need much hardware: use a cache. Let the OS handle all page management and
+simply cache the result of the OS manipulation.
+
+In this implementation, the OS supplies the physical page location given the
+virtual requested page number. This information is then stored in an array of
+associative registers. If the page location is cached then it is used to
+calculate the physical memory location by adding the address offset. Otherwise
+a page fault is generated and the OS must insert the requested page number into
+the cache.
+                                  offset
+ Virtual Address ========+----------------------[+]======> Physical Address
+                         |                       |
+                         |                       |
+                         | page number           |
+                       __|__________             | page location
+                      |______|______|            |
+                      |______|______|------------'
+                      |______|______|
+                           cache
+
+In this scheme the hardware only needs to support a simple one level paging.
+Splitting addresses down the middle divide memory into 256 pages of 256 words.
+             _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  Address:  |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|
+                page no.         offset
+
+This seems reasonable to implement. But we have to remember that both data and
+instructions are accessed by virtual addresses. Having 256 instructions per page
+may lead to thrashing of the page cache when a task crosses page boundries.
+
+We can expect an average task to have around 1k of instructions. This translates
+to 4 pages: 4 cache entries. Try running several tasks at once and we quickly
+find ourselves using 10 to 20 pages constantly. And this does not even consider
+data access. This means we need a large 32 or 64 entry page cache for reasonable
+performance.
+
+If we set the page size to 1k, we will have a lot less thrashing. But this only
+gives us a total of 64 pages. Not much to dish out to applications.
+
+A good compromise is to divide memory into 128 pages of 512 words each. This
+divides the address into 7 bit page number + 9 bit offset.
+             _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  Address:  |_ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|
+                page no.        offset
+
+One possibility is to make paging configurable and let the OS decide. But this
+adds all kinds of other complexities. For MM16, a fixed 512 word (1kB) page
+scheme is good enough.
+________________________________________________________________________________
+Modified Register Map to support Paging:
+     ____________
+ 00 |____________|  lit
+ 01 |            |  pc
+ 02 |    PC      |  call / ret
+ 03 |            |  psp
+ 04 |____________|  pst
+ 05 |            |  acu
+ 06 |    ALU     |  add / inc
+ 07 |            |  sub / inv
+ 08 |            |  and / rsh
+ 09 |            |  or  / rs2
+ 0a |____________|  xor / ls2
+ 0b |            |  stp
+ 0c |            |  stk
+ 0d |____________|  std
+ 0e |________|      mpa
+ 0f |________|___   mpb
+ 10 |            |  int    (interrupt control and status)
+ 11 |   SYSTEM   |  cpucon (cpu control register)
+ 12 |            |  pg     (page register)
+ 13 |            |  trap   (trap register)
+ 14 |____________|  sst    (system stack)
+ 15 |            |
+    .  i/o etc   .
+    .            .
+
+________________________________________________________________________________
+New Registers:
+The following registers are added to support virtual memory and paging:
+
+	cpucon:	CPU Control Register.
+		This register allows features of the CPU to be turned on/off.
+
+	pg:	Page Register.
+		Communicates virtual/physical page numbers between CPU and OS.
+________________________________________________________________________________
+CPUCON:
+The following is the format of cpucon:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+   |_ _|_ _ _ _ _ _ _|_|_ _|_ _|_ _|
+     .   reserved     .  .   .   .
+     |                |  |   |   |
+     C                |  |   |   '--- GIE
+               PGC----'  |   '----- PGE
+                        USR
+
+This register has read/write access. When read, cpucon returns its current
+status.
+
+The values in cpucon are double bit values with the lower bit representing off
+and the higher bit representing on. When written to, the double bit values are
+interpreted as follows:
+
+	00 = no change
+	01 = off
+	10 = on
+	11 = undefined (no change, on or off depending on implementation)
+
+For example, to enable GIE:
+
+	cpucon = 0x0002
+
+and to disable GIE:
+
+	cpucon = 0x0001
+
+This means that individual features controlled by cpucon can be turned on and
+off without affecting others.
+
+The GIE bit is the global interrupt enable which mirrors the GIE bit in int.
+
+PGE enables paging when its value is 1. When PGE is disabled, all memory access
+goes directly to the address bus bypassing the paging hardware. PGE defaults to
+disabled when the CPU starts up.
+
+PGC clears the paging cache when a 1 is written to it. Unlike other values, PGC
+has only one bit. When read, it always returns zero.
+
+USR enables user mode when its value is 1. In user mode, changes to cpucon, int,
+sst and pg are not allowed by the hardware. Some implementations may prevent
+psp from being modified in user mode. When USR is disabled the CPU is in
+supervisory mode. When the CPU enters user mode it stays in user mode until one
+of the following occurs:
+
+  1. the CPU is interrupted
+  2. a page fault occurs
+
+The C bit is the carry bit of the ALU. This allows read/write manipulation of
+the carry bit. Thus the context of the carry bit can be saved and restored by
+the OS.
+
+The remaining upper half of cpucon is reserved for future use.
+________________________________________________________________________________
+PG:
+The page register is what is used to handle paging. When a page fault occurs the
+CPU writes the requested virtual page number to this register. The OS must read
+this register, find the physical location of the requested page and write the
+real page number back to this register.
+
+The page register is divided into 2 parts. The top 8 bits represent the page
+number. The bottom 8 bits represent the process id. The virtual page number
+along with the process id forms a key for the associative register cache. The
+process id is necessary for the hardware to distinguish page requests from
+different tasks.
+                   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    pg register:  |_|_ _ _ _ _ _ _|_ _ _ _ _ _ _ _|
+                       page no.       process id
+
+If paging is enabled, the OS must update the process id when switching between
+tasks. The process id is never modified by the hardware and is under full OS
+control.
+
+When the upper 8 bits of pg are written to, the virtual and physical page
+numbers along with the process id are cached by the CPU hardware.
+                _____ ______
+  pg register: |_____|______|
+                ^  |      |
+   ______       |  |__    |
+  |______|------+     |   '-----.
+ requested      |     |         |
+   page    .--->|     |         |
+           |   _v___ _v___      |
+           |  |_____|_____|     |
+           |  |_____|_____|     |
+           |  |_____|_____|     |
+           |       page         |
+           |       cache        |
+           '--------------------'
+
+Needless to say, the byte transfer modes should be used with this register.
+________________________________________________________________________________
+TRAP:
+The trap register allows programs running in user mode to communicate with
+programs in supervisory mode. A write to the trap register causes an interrupt
+with bit 7 of the interrupt source field in the int register set. This also
+means that this feature can be enabled and disabled using the upper byte of the
+int register. Also, GIE must be enabled for trap to work.
+
+ int:  interrupt mask  interrupt source
+       _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+      |_|_ _ _ _ _ _ _|_|_ _ _ _ _ _ _|
+       .               .
+       |               |
+   trap enable     trap status
+
+The trap register has no other effect. It is up to the interrupt service routine
+to interpret the value in trap and take appropriate action.
+________________________________________________________________________________
+SST:
+The sst register is an interface to a hardware stack. It is meant for code
+running in supervisory mode to temporarily save context. The stack is at least
+4 levels deep on all implementations.
+________________________________________________________________________________
+Page Faults:
+When the hardware can't find a requested page in the page cache a page fault
+occurs. A page fault is similar to interrupts in that the current instruction
+is interrupted and control is transferred to a service routine. But whereas an
+interrupt jumps to 0x0002, a page fault jumps to 0x0004. Also, a page fault
+automatically disables PGE in addition to GIE and USR.
+
+A page fault is handled in the same way as an interrupt except that we know what
+is causing the fault and don't need to check the int register for the cause.
+Page faults are essentially a special vectored interrupt.
+
+The fault handler must save any context for resources it needs to use. Then it
+must read the requested page number from pg and fetch the physical page number.
+The fault handler is responsible for handling and reporting any illegal memory
+access error.
+
+Before returning, the fault handler must restore any saved context. The fault
+handler must also restore GIE, USR and PGE.
+
+The following is an example of a simple fault handler:
+
+    .......................................................................
+	# Assume that USR and GIE are enabled (no checking).
+	# Handler for illegal memory access not provided.
+	# Each process is also assumed to have a single large page table
+	# array the location of which is stored in a large process table.
+	#
+	#    proc_table->page_table->page_number.
+	
+	:@0x0004
+	pc = PAGE_FAULT
+	
+	
+	:PAGE_FAULT
+	# save return address
+	sst = ret
+
+	# save context
+	sst = stp
+	sst / cpucon ; save carry
+	sst = acu
+
+	# get process id
+	acu - pg
+	
+	# lookup page table for this process from process table
+	add = proc_table
+	stp = acu
+	acu = std
+	# now we are pointing to the page table of this process
+	
+	# get requested page table
+	add / pg
+	
+	# lookup physical page number
+	stp = acu
+	acu = std
+	
+	# if value is zero then memory have not been assigned.
+	# treat as illegal access error
+	pc z= ILLEGAL_MEMORY_ACCESS
+	
+	# return page number
+	pg \ acu
+	
+	# restore context
+	acu = sst
+	cpucon \ sst    ;restore carry
+	stp = sst
+	
+	cpucon = 0x002a ;re-enable USR, PGE and GIE
+	pc = sst        ;return
+	
+	# 18 instructions, 21 words not including
+	# ILLEGAL_MEMORY_ACCESS routine.
+    .......................................................................

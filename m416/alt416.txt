@@ -1,0 +1,93 @@
+ALT416 - Simple 16 bit Move Machine
+===================================
+This is an alternative design of M416 with the goal of making possible
+simple future extension to 32 & 64 bits.
+
+Instruction formats:
+16 bit:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _|_ _|_ _ _ _ _|_ _ _ _ _|
+  0  cond  .     dest      src
+           |
+          mode
+
+cond:
+	000 = always
+	001 = zero (z)
+	010 = not zero (nz)
+	011 = carry (c)
+	100 = not carry (nc)
+	101 = sign (s)
+	110 = reserved
+	111 = reserved
+
+mode:
+	00 = 16 bits
+	01 = upper 8 bit for src and lower 8 bit for dest
+	10 = lower 8 bit for src and upper 8 bit for dest
+	11 = lower 8 bit
+
+8 bit packed:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _|_ _ _ _|_ _ _ _|_ _ _ _|
+  1  dest   src     dest    src
+
+
+Possible future extension to 32 bit:
+
+32 bit instruction:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _ _ _|_ _ _ _|_ _ _ _|_ _ _ _|_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|
+  1 1 0    cond    mode                dest            src
+
+
+Or why not:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _ _|_ _ _ _ _|_ _ _ _ _ _ _ _|
+  1 1 0   mode           N
+
+where the next N insturctions are to be executed in 32 bit mode using the
+specified mode.
+
+Or even more simply:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _ _|_ _ _ _ _|_ _ _ _|_ _ _ _|
+  1 1 0   mode      dest    src
+
+enter 32 bit mode using the given mode modifier and execute an optional
+8 bit packed instruction.
+
+Mode modifiers determines how the mode field in an instruction is interpreted.
+
+0: revert to 16 bit addressing
+	00 = 32 bits
+	01 = upper 16 bit for src and lower 16 bit for dest
+	10 = lower 16 bit for src and upper 16 bit for dest
+	11 = lower 16 bit
+
+1: native 32 bit addressing
+	00 = 32 bits
+	01 = upper 16 bit for src and lower 16 bit for dest
+	10 = lower 16 bit for src and upper 16 bit for dest
+	11 = lower 16 bit
+
+2: lower 8
+	00 = 32 bits
+	01 = second 8 bit for src and lower 8 bit for dest
+	10 = lower 8 bit for src and second 8 bit for dest
+	11 = lower 8 bit
+
+3: extract 8
+	00 = 32 bits
+	01 = upper 8 bit for src and lower 8 bit for dest
+	10 = third 8 bit for src and lower 8 bit for dest
+	11 = second 8 bit for src and lower 8 bit for dest
+
+4: stuff 8
+	00 = 32 bits
+	01 = lower 8 bit for src and upper 8 bit for dest
+	10 = lower 8 bit for src and third 8 bit for dest
+	11 = lower 8 bit for src and second 8 bit for dest
+
+
+In 32 bit mode, 8 bit packed instructions always work on 32 bits of data.

@@ -1,0 +1,611 @@
+M216 - Simple 16bit Move Machine
+================================
+
+Inspired by MM32
+
+Instruction formats:
+16 bit:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _|_ _ _ _ _ _|_ _ _ _ _ _|
+  0  op   destination   source
+
+op:
+	000 = always
+	001 = zero
+	010 = not zero
+	011 = carry
+	100 = not carry
+	101 = upper 8 bit for src and lower 8 bit for dest
+	110 = lower 8 bit for src and upper 8 bit for dest
+	111 = lower 8 bit
+
+8 bit packed:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _|_ _ _ _|_ _ _ _|_ _ _ _|
+  1  dest   src     dest    src
+
+Where the first part of the packed instruction is only 7 bits and the second
+part is fully 8 bits. This means the first part of packed instructions must
+always have either the ALU or the stack as the destination.
+
+Assembly notation:
+
+	destination op source
+
+op:
+	=    always
+	z=   if zero
+	nz=  if not zero
+	c=   if carry
+	nc=  if not carry
+	/    upper 8 to lower 8
+	\    lower 8 to upper 8
+	-    lower 8
+
+Packed instructions are written:
+
+	destination = source ; destination = source
+
+The following is the proposed register set:
+
+     ____________
+ 00 |            |  acu - accumulator
+ 01 |    ALU     |  add / inc
+ 02 |            |  sub / inv    ALU registers have different behaviours
+ 03 |            |  and / rsh    when written to or read from.
+ 04 |            |  or  / rs2
+ 05 |____________|  xor / ls2
+ 06 |            |  std - stack data: read/write access to top of stack
+ 07 |____________|  stk - general purpose stack
+ 08 |            |
+    .            .
+    .    RAM     .  ma0 - ma7 (windowed ram access)
+    .            .
+ 0f |____________|
+ 10 |            |  pc  - program counter
+ 11 |    PC      |  ret - subroutine return address
+ 12 |            |  psp - program stack pointer
+ 13 |____________|  pst - program stack
+ 14 |____________|  stp - general purpose stack pointer
+ 15 |_________|     mpa - pointer to ram window (only upper 13 bits are used)
+ 16 |______|_____   mpb - pointer to ram window (only upper 11 bits are used)
+ 17 |____________|  lit - literal (read only)
+ 18 |            |
+    .            .
+    .  i/o etc   .
+    .            .
+    .            .
+ 1f |____________|
+ 20 |            |
+    .            .
+    .            .
+    .    RAM     .
+    .            .  mb0 - mb31 (windowed ram access)
+    .            .
+ 3f |____________|
+
+
+In effect, this behaves as two different machines superimposed on top of each
+other. One with a 6 bit register address space with 16 bit instructions and
+the other a much smaller machine with a 4 bit register address space and 8 bit
+instructions.
+
+The smaller machine has full access to the ALU, the stack and 8 words of
+windowed RAM. What it doesn't have are conditional tests, literals and access
+to the program counter. The larger 'superset' is responsible for literals,
+subroutine calls, program jumps, contitional tests and pointer manipulation.
+________________________________________________________________________________
+Now, lets run a few synthetic programs to see how much code space this saves.
+
+####################################################
+# Example Code 1:
+# 7 Segment LED Counter:
+# Assume font is located at FONT
+# Assume LEDs are located at LED
+# Assume Memory pointers are correctly initialised.
+####################################################
+
+# Since we have lots of space in ma, use some to store constants:
+2	ma7 = 9
+4	ma6 = 0
+6	ma5 = FONT
+8	ma4 = NEXT
+
+:LOOP
+	# Increment BCD counters:
+	# count0++
+9	acu = ma0
+10	ma0 = inc
+	
+	# If count0 > 9 count1++;count0=0
+11	acu = ma7
+12	sub = ma0
+13	pc nc= ma4
+14	acu = ma1
+15	ma0 = ma6
+16	ma1 = inc
+	
+	# If count1 > 9 count2++;count1=0
+17	acu = ma7
+18	sub = ma1
+19	pc nc= ma4
+20	acu = ma2
+21	ma1 = ma6
+22	ma2 = inc
+	
+	# If count2 > 9 count2=0
+23	acu = ma7
+24	sub = ma2
+25	pc nc= ma4
+26	ma2 = ma6
+
+: NEXT
+	# Display value on 7 segment LEDs
+27	acu = ma5
+28	add = ma0
+29	stp = acu
+30	mb0 = std
+	
+31	acu = ma5
+32	add = ma1
+33	stp = acu
+34	mb1 = std
+	
+35	acu = ma5
+36	add = ma2
+37	stp = acu
+38	mb1 = std
+	
+40	pc = LOOP
+
+# 40 words total
+
+####################################################
+# Now for the packed version:
+####################################################
+
+# Store some constants:
+2	ma7 = 9
+4	ma6 = 0
+6	ma5 = FONT
+8	ma4 = NEXT
+
+: LOOP
+	# Increment BCD counters:
+	# count0++
+9	acu = ma0; ma0 = inc
+	
+	# If count0 > 9 count1++;count0=0
+10	acu = ma7; sub = ma0
+11	pc nc= ma4
+12	acu = ma1; ma0 = ma6
+13	ma1 = inc
+	
+	# If count1 > 9 count2++;count1=0
+14	acu = ma7; sub = ma1
+15	pc nc= ma4
+16	acu = ma2; ma1 = ma6
+17	ma2 = inc
+	
+	# If count2 > 9 count2=0
+18	acu = ma7; sub = ma2
+19	pc nc= ma4
+20	ma2 = ma6
+
+: NEXT
+	# Display value on 7 segment LEDs
+21	acu = ma5; add = ma0
+22	stp = acu
+23	mb0 = std
+	
+24	acu = ma5; add = ma1
+25	stp = acu
+26	mb1 = std
+	
+27	acu = ma5; add = ma2
+28	stp = acu
+29	mb1 = std
+	
+31	pc = LOOP
+
+# 31 words total, 22% code space savings.
+
+
+####################################################
+# Example Code 2:
+# Funky CRC16 function.
+# Subroutine accepts input data in the lower 8 bits
+# of ma1 and crc value in ma0. The returned value
+# is the modified ma0.
+#
+#	crc  = (unsigned char)(crc >> 8) | (crc << 8);
+#	crc ^= ser_data;
+#	crc ^= (unsigned char)(crc & 0xff) >> 4;
+#	crc ^= (crc << 8) << 4;
+#	crc ^= ((crc & 0xff) << 4) << 1;
+####################################################
+
+: CRC_UPDATE
+	# Save some constants
+2	ma7 = 0xff
+	
+	# Begin CRC calculation:
+3	ma2 / ma0
+4	ma2 \ ma0
+	
+5	acu = ma2
+6	xor = ma1
+
+7	ma2 = acu
+8	xor = ma7
+9	acu = rs2
+10	acu = rs2
+11	xor = ma2
+	
+12	ma2 = acu
+13	acu / ma2
+14	acu = rs2
+15	acu = rs2
+16	xor = ma2
+
+17	ma2 = acu
+18	xor = ma7
+19	acu = rs2
+20	acu = rs2
+21	acu = rsh
+22	xor = ma2
+23	ma0 = acu
+	
+24	pc = ret
+
+# 24 words total
+
+####################################################
+# Now for the packed version:
+####################################################
+
+: CRC_UPDATE
+	# Save some constants
+2	ma7 = 0xff
+	
+	# Begin CRC calculation:
+3	ma2 / ma0
+4	ma2 \ ma0
+	
+5	acu = ma2; xor = ma1
+
+6	ma2 = acu
+7	xor = ma7; acu = rs2
+8	acu = rs2; xor = ma2
+	
+9	ma2 = acu
+10	acu / ma2
+11	acu = rs2; acu = rs2
+12	xor = ma2; ma2 = acu
+	
+13	xor = ma7; acu = rs2
+14	acu = rs2; acu = rsh
+15	xor = ma2; ma0 = acu
+	
+16	pc = ret
+
+# 16 words total, 33% code space savings.
+
+
+####################################################
+# Example Code 3:
+# Fast bit count function.
+# Subroutine accepts parameter in ma0 and returns
+# via ma2
+#
+#int bit_count(long x) {
+#	int n = 0;
+#	if (x) {
+#		do {
+#			n++;
+#   	} while ((x &= x-1));
+#	}
+#	return(n);
+#}
+####################################################
+
+: BIT_COUNT
+1	pst = ret
+3	ma2 = 0
+5	ma1 = 1
+	
+6	acu = ma0
+8	pc z= END
+	: LOOP
+9		acu = ma2
+10		acu = inc
+11		ma2 = acu
+12		acu = ma0
+13		sub = ma1
+14		and = ma0
+15		ma0 = acu
+17		pc nz= LOOP
+	: END
+18	pc = pst
+
+# 18 words total
+
+####################################################
+# Now for the packed version:
+####################################################
+
+: BIT_COUNT
+1	pst = ret
+3	ma2 = 0
+5	ma1 = 1
+	
+6	acu = ma0
+8	pc z= END
+	: LOOP
+9		acu = ma2; acu = inc
+10		ma2 = acu
+11		acu = ma0; sub = ma1
+12		and = ma0; ma0 = acu
+14		pc nz= LOOP
+	: END
+15	pc = pst
+
+# 15 words total, 17% code space savings.
+
+
+####################################################
+# Example Code 4:
+# Heapsort
+# Subroutine accepts the address of the array in ma0
+# and the length of the array in ma1
+####################################################
+
+: HEAP_SORT
+define ARRAY ma0
+define n ma1
+define i ma2
+define parent ma3
+define child ma4
+define t ma5
+define ONE ma6
+	
+1	pst = ret
+3	ma6 = 1
+#				i = n/2
+4	acu = n
+5	i = rsh
+#				while (1) {
+: LOOP0
+#					if (i > 0) {
+6	acu = i
+8	pc z= NEXT0
+#						i--;
+#						t = arr[i];
+9	sub = ONE
+10	i = acu
+11	add = ARRAY
+12	stp = acu
+13	t = std
+15	pc = NEXT3
+#					} else {
+#						n--;
+#						if (n == 0) return;
+: NEXT0
+16	acu = n
+17	sub = ONE
+18	pc z= pst
+19	n = acu
+#						t = arr[n];
+#						arr[n] = arr[0];
+20	add = ARRAY
+21	stp = ARRAY
+22	ma7 = std
+23	stp = acu
+24	t = std
+25	std = ma7
+#					}
+#					parent = i;
+#					child = i*2 + 1;
+: NEXT3
+26	parent = i
+27	acu = i
+28	add = i
+29	add = ONE
+30	child = acu
+
+: LOOP1
+#					while (child < n) {
+31	acu = n
+32	sub = child
+34	pc nc= NEXT1
+#						if (child + 1 < n) {
+35	sub = ONE
+37	pc nc= NEXT2
+#							if (arr[child + 1] > arr[child]) {
+38	acu = child
+39	add = ONE
+40	stp = acu
+41	acu = std
+42	stp = child
+43	sub = std
+45	pc nc= NEXT2
+#								child++;
+46	acu = child
+47	add = ONE
+48	child = acu
+#							}
+#						}
+#						if (arr[child] > t) {
+: NEXT2
+49	stp = child
+50	acu = std
+51	sub = t
+53	pc nc= NEXT1
+#							arr[parent] = arr[child];
+#							parent = child;
+54	stp = child
+55	ma7 = std
+56	stp = parent
+57	std = ma7
+58	parent = child
+#							child = parent*2 + 1;
+59	acu = parent
+60	add = parent
+61	add = 1
+62	child = acu
+#						} else {
+#							break;
+#						}
+#					}
+64	pc = LOOP1
+#					arr[parent] = t;
+: NEXT1
+65	stp = parent
+66	std = t
+68	pc = LOOP0
+#				}
+
+# 68 words total
+
+####################################################
+# Now for the packed version:
+####################################################
+
+: HEAP_SORT
+define ARRAY ma0
+define n ma1
+define i ma2
+define parent ma3
+define child ma4
+define t ma5
+define ONE ma6
+	
+1	pst = ret
+3	ma6 = 1
+#				i = n/2
+4	acu = n; i = rsh
+#				while (1) {
+: LOOP0
+#					if (i > 0) {
+5	acu = i
+7	pc z= NEXT0
+#						i--;
+#						t = arr[i];
+8	sub = ONE; i = acu
+9	add = ARRAY
+10	stp = acu
+11	t = std
+13	pc = NEXT3
+#					} else {
+#						n--;
+#						if (n == 0) return;
+: NEXT0
+14	acu = n; sub = ONE
+15	pc z= pst # RETURN
+16	n = acu
+#						t = arr[n];
+#						arr[n] = arr[0];
+17	add = ARRAY
+18	stp = ARRAY
+19	ma7 = std
+20	stp = acu
+21	t = std
+22	std = ma7
+#					}
+#					parent = i;
+#					child = i*2 + 1;
+: NEXT3
+23	parent = i
+24	acu = i; add = i
+25	add = ONE; child = acu
+
+: LOOP1
+#					while (child < n) {
+26	acu = n; sub = child
+28	pc nc= NEXT1
+#						if (child + 1 < n) {
+29	sub = ONE
+31	pc nc= NEXT2
+#							if (arr[child + 1] > arr[child]) {
+32	acu = child; add = ONE
+33	stp = acu
+34	acu = std
+35	stp = child
+36	sub = std
+38	pc nc= NEXT2
+#								child++;
+39	acu = child; add = ONE
+40	child = acu
+#							}
+#						}
+#						if (arr[child] > t) {
+: NEXT2
+41	stp = child
+42	acu = std; sub = t
+44	pc nc= NEXT1
+#							arr[parent] = arr[child];
+#							parent = child;
+45	stp = child
+46	ma7 = std
+47	stp = parent
+48	std = ma7; parent = child
+#							child = parent*2 + 1;
+49	acu = parent; add = parent
+50	add = 1; child = acu
+#						} else {
+#							break;
+#						}
+#					}
+52	pc = LOOP1
+#					arr[parent] = t;
+: NEXT1
+53	stp = parent
+54	std = t
+56	pc = LOOP0
+#				}
+
+# 56 words total, 18% code space savings
+________________________________________________________________________________
+From the code above, it's fairly obvious that the more the ALU is involved in
+a piece of code, the more space is saved by packed instructions. In theory,
+since each packed instruction stores two operations, the limit of code savings
+is 50%. Practically, it is expected that the limit of code savings is somewhere
+around 40% with typical savings of around 20%.
+________________________________________________________________________________
+The first obvious effect of packed instructions is the reduced code size of
+programs. The second obvious effect is it opens up a possible execution speed
+up for packed instructions since the second instruction does not need to be
+fetched.
+
+The following is the normal execution sequence of MM16:
+
+ 1	address bus = PC
+ 2		read instruction
+ 3	address tristate, increment PC
+ 4	set register address to SOURCE
+ 5		read data
+ 6	set register address to DESTINATION
+ 7		write data
+ 8		idle
+ 9	commit data, address tristate
+10	(spare)
+
+For packed instructions, the instruction sequence can be:
+
+ 1	address bus = PC
+ 2		read instruction
+ 3	address tristate, increment PC
+ 4	set register address to SOURCE
+ 5		read data
+ 6	set register address to DESTINATION
+ 7		write data
+ 8		idle
+ 9	commit data, set register address to SOURCE
+10 		read data
+11	set register address to DESTINATION
+12		write data
+13		idle
+14	commit data, address tristate
+
+So, what would normally take 10 clock cycles to execute two instructions
+can be done in 7 cycles for packed instructions. This is a 30% faster.
