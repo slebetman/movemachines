@@ -1,0 +1,115 @@
+M416 - Simple 16 bit Move Machine
+=================================
+Inspired by m216.
+
+Instruction formats:
+16 bit:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _|_ _ _ _ _|_ _ _|_ _ _ _ _|
+  0  .    dest    cond     src
+     |
+    mode
+
+cond:
+	000 = always
+	001 = zero (z)
+	010 = not zero (nz)
+	011 = carry (c)
+	100 = not carry (nc)
+	101 = sign (s)
+	110 = reserved
+	111 = reserved
+
+mode:
+	00 = 16 bits
+	01 = upper 8 bit for src and lower 8 bit for dest
+	10 = lower 8 bit for src and upper 8 bit for dest
+	11 = lower 8 bit
+
+8 bit packed:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_|_ _ _|_ _ _ _|_ _ _ _|_ _ _ _|
+  1  dest   src     dest    src
+
+
+The instruction set sees the return of fully predicated instructions. 16 bit
+instructions are like mm16 instructions having both mode and condition. Also
+added a new condition, test for sign bit.
+_______________________________________________________________________________
+Register set:
+     ____________
+ 00 |            |  acu - accumulator
+ 01 |    ALU     |  add / one
+ 02 |            |  and / nil
+ 03 |            |  or  / all
+ 04 |____________|  xor / rsh
+ 05 |            |  stp - general purpose stack pointer
+ 06 |            |  std - stack data: read/write access to top of stack
+ 07 |____________|  stk - general purpose stack
+ 08 |            |
+    .            .
+    .    RAM     .  m0 - m7 (windowed ram access)
+    .            .
+ 0f |____________|
+ 10 |____________|  lit - literal (read only)
+ 11 |            |  pc  - program counter
+ 12 |    PC      |  ret - subroutine return address
+ 13 |            |  psp - program stack pointer
+ 14 |____________|  pst - program stack
+ 15 |_________|__   mp  - pointer to ram window (only upper 13 bits are used)
+ 16 |            |
+    .            .
+    .  i/o etc   .
+    .            .
+    .            .
+ 1f |____________|
+
+The register set is smaller allowing us to use only 5 bits instead of 6 for
+addressing. This reduction is achieved mainly by trimming the lower half
+of the m216 register set which was the second ram window.
+
+Note that stacks pre-increment on writes and post-decrement on read.
+_______________________________________________________________________________
+An alternate ALU without sub:
+     ____________
+ 00 |            |  acu - accumulator
+ 01 |            |  add / one
+ 02 |    ALU     |  and / nil
+ 03 |            |  or  / all
+ 04 |____________|  xor / rsh
+
+The registers one, nil and all are constant values.
+
+	one = 1
+	nil = 0
+	all = 65535 (0xffff)
+
+sub can be emulated by 2's complementing and add:
+
+	acu = m1; xor = all
+	add = one; add = m0
+
+2 instruction words, 4 instruction cycles. Also notice that inversion is done
+by xor with all (0xffff). Subtraction with constant is fast:
+
+	acu = m0
+	add = lit
+	-CONSTANT   ; CONSTANT is a negative number.
+
+3 instruction words, 2 instruction cycles.
+
+Note that addition with a 2's complement number has the exact same side-effect
+as a sub instruction. That is, if there's no underflow then a carry is
+generated but if the result underflows then no carry is generated. So carry can
+still be treated as 'not borrow'.
+
+Increment is almost as fast as m216 due to the constant one register:
+
+	acu = m0; add = one
+
+Decrement is also fast due to the constant all register:
+
+	acu = m0; add = all
+
+this is because, in 2s complement, -1 is simply 0xffff.
+_______________________________________________________________________________

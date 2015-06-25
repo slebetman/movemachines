@@ -1,0 +1,72 @@
+MM16 Alternate Subroutine Call Procedure
+========================================
+
+The current implementation of a call uses a dedicated call/ret register which
+is separate from the pc register:
+
+The proposed register set is:
+
+     ____________
+ 00 |____________|  lit - literal (read only)
+ 01 |            |  pc  - program counter
+ 02 |    PC      |  call / ret - subroutine call / return address
+    :            :
+
+The originally designed MM16 only had the pc register for both jumps and calls.
+The reason for separating the two is to solve the problem of returning from
+interrupts.
+
+In the original implementation, a write to pc always causes the return address
+to be saved to ret. And ret was implemented as a read/write register or stack
+so that the interrupt service routine can save and later restore its value.
+But returning from interrupt must perform a goto without affecting ret. There
+was no mechanism for this. So the call/ret method was introduced allowing the
+use of pc to return without affecting ret.
+
+The current call/ret mechanism however has its drawbacks. Since ret is not an
+accessible register, an interrupt in between a call and saving a ret would
+have no method of saving and later restoring ret. This means that the interrupt
+can potentially clobber ret. The solution was to make the call/ret pair atomic
+by disabling interrupts between them.
+
+That solution however makes interrupts non-deterministic since there is always
+a possibility that it might be delayed by at least 1 extra instruction cycle.
+This prevents us from using interrupts for accurate timing. Obviously it would
+be nicer if interrupts may occur anywhere.
+
+An alternative solution is to introduce a dedicated register for returning from
+interrupt. This was rejected since it wastes precious register space for a
+special case. But with the current implementation of SYSTEM and APPLICATION
+states as well as user and supervisory modes, entering and leaving an interrupt
+service routine has special side-effects which has to be dealt with.
+
+The current solution to the now complicated interrupt sequence is to introduce
+a dedicated return from interrupt register: rfi. Since we now have this feature
+the call/ret mechanism need not exist. Therefore the new register set can be:
+     ____________
+ 00 |____________|  lit - literal (read only)
+ 01 |            |  pc  - program counter
+ 02 |    PC      |  ret - return address
+    :            :
+
+    :____________:
+ 10 |            |  int    - interrupt control and status
+ 11 |            |  cpucon - cpu control register
+ 12 |   SYSTEM   |  pg     - page register
+ 13 |            |  trap   - software interrupt
+ 14 |            |  rfi    - return from interrupt
+ 15 |____________|  sst    - system stack
+    :            :
+
+________________________________________________________________________________
+RFI
+
+The rfi register is read/write. Reading rfi returns the return address for the
+interrupt service routine. In other words, the location where the currently
+running task is interrupted. Writing to rfi returns from interrupt. So the
+simplest way to return from interrupt is:
+
+	rfi = rfi
+
+Obviously handling task switching is more complicated since we are not returning
+to the same location but to another task.

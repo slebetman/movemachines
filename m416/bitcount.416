@@ -1,0 +1,24 @@
+0 0x1310  #psp = lit
+1 0x0100  #0x100
+2 0x1510  #mp = lit
+3 0x0200  #0x200
+4 0x0010  #acu = lit
+5 0x1234  #0x1234
+6 0x1110  #pc = lit
+7 0x000b  #11
+8 0x0800  #m0 = acu
+9 0x1110  #pc = lit
+10 0x0009  #9
+11 0x1412  #pst = ret
+12 0x1130  #pc z= lit
+13 0x0017  #23
+14 0x0800  #m0 = acu
+15 0x0902  #m1 = nil
+16 0x8911  #acu = m1 ; add = one
+17 0x0900  #m1 = acu
+18 0x8813  #acu = m0 ; add = all
+19 0xa880  #and = m0 ; m0 = acu
+20 0x1150  #pc nz= lit
+21 0x0010  #16
+22 0x0009  #acu = m1
+23 0x1114  #pc = pst

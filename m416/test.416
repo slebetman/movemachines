@@ -1,0 +1,114 @@
+0 0x1310  #psp = lit
+1 0x0100  #0x100
+2 0x1510  #mp = lit
+3 0x0200  #0x200
+4 0x1110  #pc = lit
+5 0x002e  #46
+6 0x0141  #321
+7 0x0d6b  #3435
+8 0x00e7  #231
+9 0x0157  #343
+10 0x1532  #5426
+11 0x00d5  #213
+12 0x01b3  #435
+13 0x1556  #5462
+14 0x01b0  #432
+15 0x110a  #4362
+16 0x014c  #332
+17 0x000c  #12
+18 0x0003  #3
+19 0x002d  #45
+20 0x001f  #31
+21 0x0006  #6
+22 0x0007  #7
+23 0x0062  #98
+24 0x0005  #5
+25 0x0003  #3
+26 0x198f  #6543
+27 0x0043  #67
+28 0x03da  #986
+29 0x10e5  #4325
+30 0x036c  #876
+31 0x160c  #5644
+32 0x004c  #76
+33 0x002b  #43
+34 0x004c  #76
+35 0x0358  #856
+36 0x0041  #65
+37 0x0008  #8
+38 0x0270  #624
+39 0x002b  #43
+40 0x1602  #5634
+41 0x1c9d  #7325
+42 0x0036  #54
+43 0x0006  #6
+44 0x02fc  #764
+45 0x0004  #4
+46 0x0810  #m0 = lit
+47 0x0006  #6
+48 0x0910  #m1 = lit
+49 0x0028  #40
+50 0x1110  #pc = lit
+51 0x0036  #54
+52 0x1110  #pc = lit
+53 0x0070  #112
+54 0x1412  #pst = ret
+55 0x89a4  #acu = m1 ; m2 = rsh
+56 0x000a  #acu = m2
+57 0x1130  #pc z= lit
+58 0x0040  #64
+59 0x93a0  #add = all ; m2 = acu
+60 0x9850  #add = m0 ; stp = acu
+61 0x0e06  #m6 = std
+62 0x1110  #pc = lit
+63 0x0048  #72
+64 0x8913  #acu = m1 ; add = all
+65 0x1134  #pc z= pst
+66 0x0900  #m1 = acu
+67 0x9859  #add = m0 ; stp = m1
+68 0x0e06  #m6 = std
+69 0xd8e6  #stp = m0 ; m6 = std
+70 0x8918  #acu = m1 ; add = m0
+71 0xd06e  #stp = acu ; std = m6
+72 0x0b0a  #m3 = m2
+73 0x8a10  #acu = m2 ; add = acu
+74 0x91c0  #add = one ; m4 = acu
+75 0x8c43  #acu = m4 ; xor = all
+76 0x9119  #add = one ; add = m1
+77 0x1190  #pc nc= lit
+78 0x006c  #108
+79 0x8c43  #acu = m4 ; xor = all
+80 0x0109  #add = m1
+81 0x1190  #pc nc= lit
+82 0x005d  #93
+83 0x8c11  #acu = m4 ; add = one
+84 0x9850  #add = m0 ; stp = acu
+85 0x0e06  #m6 = std
+86 0x9350  #add = all ; stp = acu
+87 0x8643  #acu = std ; xor = all
+88 0x911e  #add = one ; add = m6
+89 0x1190  #pc nc= lit
+90 0x005d  #93
+91 0x8c11  #acu = m4 ; add = one
+92 0x0c00  #m4 = acu
+93 0x8c18  #acu = m4 ; add = m0
+94 0xd0e6  #stp = acu ; m6 = std
+95 0x8e43  #acu = m6 ; xor = all
+96 0x911e  #add = one ; add = m6
+97 0x1190  #pc nc= lit
+98 0x006c  #108
+99 0x8c18  #acu = m4 ; add = m0
+100 0xd0e6  #stp = acu ; m6 = std
+101 0x8b18  #acu = m3 ; add = m0
+102 0xd06e  #stp = acu ; std = m6
+103 0x0b0c  #m3 = m4
+104 0x8b10  #acu = m3 ; add = acu
+105 0x91c0  #add = one ; m4 = acu
+106 0x1110  #pc = lit
+107 0x004b  #75
+108 0x8b18  #acu = m3 ; add = m0
+109 0xd06e  #stp = acu ; std = m6
+110 0x1110  #pc = lit
+111 0x0038  #56
+112 0x1110  #pc = lit
+113 0x0070  #112

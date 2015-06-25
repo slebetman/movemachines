@@ -1,0 +1,14 @@
+0 0x0010  #acu = lit
+1 0x000e  #14
+2 0x1300  #psp = acu
+3 0x9010  #add = acu ; add = acu
+4 0x1500  #mp = acu
+5 0x0002  #acu = nil
+6 0xb110  #or = one ; add = acu
+7 0x1190  #pc nc= lit
+8 0x0006  #6
+9 0x0004  #acu = rsh
+10 0x1150  #pc nz= lit
+11 0x0009  #9
+12 0x1110  #pc = lit
+13 0x0006  #6

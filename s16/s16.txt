@@ -1,0 +1,91 @@
+s16 - Simple 16 bit Move Machine
+================================
+
+Instruction format:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+ |_ _ _ _ _|_ _ _ _ _|_ _ _ _ _|_ _ _ _ _|
+     dest      src       dest      src
+
+Register set (write/read):
+
+00  A            A register (input to ALU)
+01  B            B register (input to ALU)
+02  pc   / add    goto / add
+03  pcz  / and    goto if A is zero / and
+04  pcn  / or     goto if A is not zero / or
+05  pcc  / xor    goto if adding A and B carries / xor
+06  pczc / rsh    goto if C is zero / right shift
+07  pczd / lit    goto if D is zero / literal
+08  Cp           C pointer
+09  C            C register (memory window)
+0a  +C / C-
+0b  -C / C+
+0c  Dp           D pointer
+0d  D            D register (memory window)
+0e  D+ / -D
+0f  D- / +D
+
+___________________________________________________________________________
+
+Function calls require a macro processor:
+
+	+C D               # some argument
+	+C $RETURN_HERE
+	pc $DOUBLE
+	:RETURN_HERE
+	
+	
+	:DOUBLE
+	D+ C-              # save return address
+	A C
+	B C-
+	+C add
+	pc -D              # return
+
+So function calls can be implemented as:
+
+	macro call $FUNCTION {
+		+C $$:RET
+		pc $FUNCTION
+		:$$:RET
+	}
+	
+	macro function $NAME {
+		:$NAME
+		Dp Cp
+		D+ C-
+	}
+	
+	macro return {
+		pc -D
+	}
+
+It does mean that the D register is used as the stack frame while the C
+register is used to pass arguments and return values.
+A and B can be used if the ALU is not in use.
+
+___________________________________________________________________________
+
+Example program filling up RAM:
+
+	Cp END
+	Dp 0x1ff
+	+C 0xfff
+	:LOOP1
+		+C 0xff
+		:LOOP2
+			A C
+			B lit -1
+			D+ C
+			C add
+			pczc :END_LOOP2
+			pc LOOP2
+		:END_LOOP2
+		A C-
+		A C-
+		B lit -1
+		pczc :END_LOOP1
+		pc LOOP1
+	:END_LOOP1
+	pc END_LOOP1
+	:END

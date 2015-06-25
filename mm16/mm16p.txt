@@ -1,0 +1,504 @@
+MM16P - 16bit Microprocessor
+============================
+
+Features:
+ - Fully 16 bit data and address bus.
+ - 128k bytes / 64k words address space.
+ - Von Neuman architecture (unified address space).
+ - Fully predicated instruction set.
+ - A dedicated hardware for stack access to memory.
+ - Additional dedicated hardware for program stack.
+ - Two independent 16 word memory windows (no GPRs).
+ - Memory is always word aligned.
+ - Supports 8 and 16 bit access to data.
+ - Accumulator based ALU.
+ - Full 16 bit literals.
+ - Virtual memory support (paging).
+ - User & supervisory modes.
+ - Interrupt support.
+ - Software triggered interrupts (trap).
+ - Fast single-cycle, single instruction repeat instruction.
+ - A dedicated hardware system stack in supervisory mode.
+
+Instruction format:
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+ |_ _|_ _ _ _ _ _|_ _|_ _ _ _ _ _|
+   .  destination  .     source
+   |               |
+   |               |
+  mode         condition
+
+
+modes:
+	00 = 16 bit
+	01 = upper 8 bit for src and lower 8 bit for dest
+	10 = lower 8 bit for src and upper 8 bit for dest
+	11 = lower 8 bit
+
+conditions:
+	00 = always
+	01 = zero
+	10 = not zero
+	11 = carry
+
+________________________________________________________________________________
+Register Map:
+
+The proposed register set is:
+     ____________
+ 00 |____________|  lit - literal (read only)
+ 01 |            |  pc  - program counter
+ 02 |    PC      |  call / ret - subroutine call / return address
+ 03 |            |  psp - program stack pointer
+ 04 |____________|  pst - program stack
+ 05 |            |  acu - accumulator
+ 06 |    ALU     |  add / inc
+ 07 |            |  sub / inv    ALU registers have different behaviours
+ 08 |            |  and / rsh    when written to or read from.
+ 09 |            |  or  / rs2
+ 0a |____________|  xor / ls2
+ 0b |            |  stp - general purpose stack pointer  
+ 0c |            |  stk - general purpose stack
+ 0d |____________|  std - stack data: read/write access to top of stack
+ 0e |________|      mpa (only the upper 12 bits are used)
+ 0f |________|___   mpb (only the upper 12 bits are used)
+ 10 |            |  int    - interrupt control and status
+ 11 |   SYSTEM   |  cpucon - cpu control register
+ 12 |            |  pg     - page register
+ 13 |            |  trap / retfie - software interrupt / return from interrupt
+ 14 |____________|  sst    - system stack
+ 15 |____________|  repeat - repeat instruction
+    |            |
+    .  i/o etc   .
+ 1f |____________|
+ 20 |            |
+    .            .
+    .    RAM     .
+    .            .  ma0 - ma15 (windowed ram access)
+    .            .
+ 2f |____________|
+ 30 |            |
+    .            .
+    .    RAM     .
+    .            .  mb0 - mb15 (windowed ram access)
+    .            .
+ 3f |____________|
+
+
+This is a machine with a simple 16bit address space. But since data is accessed
+word by word MM16P can access up to 128k bytes of ram. The various 8 bit modes
+effectively acting as the 17th address bit.
+
+Note: The program stack is designed to be implemented as pointing to real RAM
+but may also be implemented as dedicated hardware stack. The general purpose
+stack however, must be implemented as pointing to actual RAM since it is also
+used as indirect access to memory. The system stack must be implemented as a
+dedicated hardware stack which is at least 4 levels deep.
+________________________________________________________________________________
+Literals:
+
+If the source register is 'lit' (0x00) then a literal operation takes place.
+The next word in the instruction stream is immediately read as a literal value
+to be transferred. As such, a literal read takes up two words of instructions.
+Depending on implementation, this may take two instruction cycles to complete.
+
+Writing to 'lit' however causes nothing to happen. This overrides the literal
+operation. Therefore, the instruction 0x0000 does not cause the program counter
+to increment twice as with regular literal operation. This may be safely used
+as a form of 'nop' instruction.
+________________________________________________________________________________
+Program Control & Subroutines:
+
+The 'pc' registers allows manipulation of the sequence of instruction. Writing
+to the register causes the program counter to point to a new location thereby
+causing a jump.
+
+Subroutine calls are performed by writing to the 'call' register. This causes a
+jump similar to writing to the 'pc' register. There is an additional overhead
+needed for a subroutine call, that is to save the return address onto the
+program stack. This is to allow the subroutine to return. This must be done
+manually.
+
+This must be done from within the subroutine, not at the subroutine call.
+
+The 'ret' register latches the return value every time a value is written to
+'call'. Therefore, it doesn't matter when 'ret' is read as long as it is
+before the next subroutine call.
+
+Returning from a subroutine call is done by popping the program stack and
+writing the value to pc.
+________________________________________________________________________________
+Two ways to get literal values:
+
+MM16P is a Von Newman machine, which means that it has direct data access to
+program instructions. This allows literals to be stored without using the
+literal instruction and use regular RAM access to read the literal value.
+________________________________________________________________________________
+CPUCON:
+The cpucon register is used to control features of the CPU. It allows features
+to be selectively enabled or disabled.
+
+The following is the format of cpucon:
+    _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+   |_ _|_ _ _ _ _ _ _|_|_ _|_ _|_ _|
+     .   reserved     .  .   .   .
+     |                |  |   |   |
+     C                |  |   |   '--- GIE
+               PGC----'  |   '----- PGE
+                        USR
+
+This register has read/write access. When read, cpucon returns its current
+status.
+
+The values in cpucon are double bit values with the lower bit representing off
+and the higher bit representing on. When written to, the double bit values are
+interpreted as follows:
+
+	00 = no change
+	01 = off
+	10 = on
+	11 = undefined (no change, on or off depending on implementation)
+
+For example, to enable GIE:
+
+	cpucon = 0x0002
+
+and to disable GIE:
+
+	cpucon = 0x0001
+
+This means that individual features controlled by cpucon can be turned on and
+off without affecting others.
+
+The GIE bit is the global interrupt enable which mirrors the GIE bit in int.
+
+PGE enables paging when its value is 1. When PGE is disabled, all memory access
+goes directly to the address bus bypassing the paging hardware. PGE defaults to
+disabled when the CPU starts up.
+
+PGC clears the paging cache when a 1 is written to it. Unlike other values, PGC
+has only one bit. When read, it always returns zero.
+
+USR enables user mode when its value is 1. In user mode, changes to cpucon, int,
+sst and pg are not allowed by the hardware. Some implementations may prevent
+psp from being modified in user mode. When USR is disabled the CPU is in
+supervisory mode. When the CPU enters user mode it stays in user mode until one
+of the following occurs:
+
+  1. the CPU is interrupted
+  2. a page fault occurs
+
+The C bit is the carry bit of the ALU. This allows read/write manipulation of
+the carry bit. Thus the context of the carry bit can be saved and restored by
+the OS.
+
+The remaining upper half of cpucon is reserved for future use.
+________________________________________________________________________________
+Interrupts:
+
+MM16P uses a simple interrupt implementation with a single entry point
+(non vectored) using a status register for identifying the source of the
+interrupt. This is slower than vectored interrupt but requires much less
+hardware to implement. The interrupt service routine is always located at a
+fixed location at 0x0002 (physical address).
+
+Only a single register (typically at 0x10) is needed to implement up to eight
+sources of interrupts:
+
+   int:              interrupt source
+                       (read only)
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|
+     interrupt mask
+     (read / write)
+
+The 16 bit 'int' register is divided into two 8 bit halves. The upper 8 bits
+are used for masking individual interrupt source. The lower 8 bits signals the
+source of the interrupt.
+
+It is possible for more than one source to trigger an interrupt. The interrupt
+service routine is responsible to decode the triggering interrupt source and
+running the appropriate routine in response.
+
+The CPU starts up with interrupts disabled. The cpucon register is used to
+enable interrupts by turning on GIE.
+
+PGE, GIE and USR are automatically disabled upon entering interrupts. This does
+not alter the bits in cpucon but just inhibits their effect. To re-enable
+interrupts, the interrupt service routine must return via writing to the retfie
+register.
+________________________________________________________________________________
+Interrupts and subroutines:
+
+The main problem with interrupting the MM16 architecture is the possibility of
+corrupting subroutine calls. In MM16, subroutine calls are not atomic due to
+having to save the value of the 'ret' register. A naive implementation would
+overwrite the 'ret' register if a subroutine call is interrupted.
+
+The solution is to prevent interrupts after a subroutine call and before saving
+the 'ret' register. A write to 'call' disables interrupts. A read from 'ret'
+re-enables interrupts depending on global interrupt enable. This mechanism does
+not alter the GIE bit.
+
+Therefore an interrupt has a +1 cycle latency depending on weather it occurs in
+the middle of a subroutine call.
+________________________________________________________________________________
+Paging:
+
+Because MM16P is intended to be a multitasking CPU it needs to support paging.
+It is not really intended for MM16 to have proper virtual memory that swaps out
+to hard disk. Instead we want the OS to be able to manage memory that is
+transparent to the running applications. All applications view the machine as
+having 128kB of RAM and all applications can be written to start from location
+0x0000. This is why we want paging.
+
+Paging hardware can be complicated because of the need to fetch the page
+location from a table in RAM. But there is a simpler way to do this that does
+not need much hardware: use a cache. Let the OS handle all page management and
+simply cache the result of the OS manipulation.
+
+In this implementation, the OS supplies the physical page location given the
+virtual requested page number. This information is then stored in an array of
+associative registers. If the page location is cached then it is used to
+calculate the physical memory location by adding the address offset. Otherwise
+a page fault is generated and the OS must insert the requested page number into
+the cache.
+                                  offset
+ Virtual Address ========+----------------------[+]======> Physical Address
+                         |                       |
+                         |                       |
+                         | page number           |
+                       __|__________             | page location
+                      |______|______|            |
+                      |______|______|------------'
+                      |______|______|
+                           cache
+
+In this scheme the hardware only needs to support a simple one level paging.
+Splitting addresses down the middle divide memory into 256 pages of 256 words.
+             _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  Address:  |_ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _|
+                page no.         offset
+
+This seems reasonable to implement. But we have to remember that both data and
+instructions are accessed by virtual addresses. Having 256 instructions per page
+may lead to thrashing of the page cache when a task crosses page boundries.
+
+We can expect an average task to have around 1k of instructions. This translates
+to 4 pages: 4 cache entries. Try running several tasks at once and we quickly
+find ourselves using 10 to 20 pages constantly. And this does not even consider
+data addess. This means we need a large 32 or 64 entry page cache for reasonable
+performance.
+
+If we set the page size to 1k, we will have a lot less thrashing. But this only
+gives us a total of 64 pages. Not much to dish out to applications.
+
+A good compromise is to divide memory into 128 pages of 512 words each. This
+divides the address into 7 bit page number + 9 bit offset.
+             _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+  Address:  |_ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _|
+                page no.        offset
+
+One possibility is to make paging configurable and let the OS decide. But this
+adds all kinds of other complexities. For MM16, a fixed 512 word (1kB) page
+scheme is good enough.
+________________________________________________________________________________
+PG:
+The page register is what is used to handle paging. When a page fault occurs the
+CPU writes the requested virtual page number to this register. The OS must read
+this register, find the physical location of the requested page and write the
+real page number back to this register.
+
+The page register is divided into 2 parts. The top 8 bits represent the page
+number. The bottom 8 bits represent the process id. The virtual page number
+along with the process id forms a key for the associative register cache. The
+process id is necessary for the hardware to distinguish page requests from
+different tasks.
+                   _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+    pg register:  |_|_ _ _ _ _ _ _|_ _ _ _ _ _ _ _|
+                       page no.       process id
+
+If paging is enabled, the OS must update the process id when switching between
+tasks. The process id is never modified by the hardware and is under full OS
+control.
+
+When the upper 8 bits of pg are written to, the virtual and physical page
+numbers along with the process id are cached by the CPU hardware.
+                _____ ______
+  pg register: |_____|______|
+                ^  |      |
+   ______       |  |__    |
+  |______|------+     |   '-----.
+ requested      |     |         |
+   page    .--->|     |         |
+           |   _v___ _v___      |
+           |  |_____|_____|     |
+           |  |_____|_____|     |
+           |  |_____|_____|     |
+           |       page         |
+           |       cache        |
+           '--------------------'
+
+Needless to say, the byte transfer modes should be used with this register.
+________________________________________________________________________________
+TRAP:
+The trap register allows programs running in user mode to communicate with
+programs in supervisory mode. A write to the trap register causes an interrupt
+with bit 7 of the interrupt source field in the int register set. This also
+means that this feature can be enabled and disabled using the upper byte of the
+int register. Also, GIE must be enabled for trap to work.
+
+ int:  interrupt mask  interrupt source
+       _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+      |_|_ _ _ _ _ _ _|_|_ _ _ _ _ _ _|
+       .               .
+       |               |
+   trap enable     trap status
+
+The trap register has no other effect. It is up to the interrupt service routine
+to interpret the value in trap an take appropriate action.
+________________________________________________________________________________
+SST:
+The sst register is an interface to a hardware stack. It is meant for code
+running in supervisory mode to temporarily save context. The stack is at least
+4 levels deep on all implementations.
+________________________________________________________________________________
+Page Faults:
+When the hardware can't find a requested page in the page cache a page fault
+occurs. A page fault is similar to interrupts in that the current instruction
+is interrupted and control is transferred to a service routine. But whereas an
+interrupt jumps to 0x0002, a page fault jumps to 0x0004. Also, a page fault
+automatically disables PGE, GIE and USR. But this does not affect the bits in
+the cpucon register, it merely inhibits their effect.
+
+A page fault is handled in the same way as an interrupt except that we know what
+is causing the fault and don't need to check the int register for the cause.
+Page faults are essentially a special vectored interrupt.
+
+The fault handler must save any context for resources it needs to use. Then it
+must read the requested page number from pg and fetch the physical page number.
+The fault handler is responsible for handling and reporting any illegal memory
+access error.
+
+Before returning, the fault handler must restore any saved context. The fault
+must exit via writing to the retfie register.
+________________________________________________________________________________
+SYSTEM and APPLICATION State.
+The SYSTEM state is a hardware state preventing GIE, USR and PGE from taking
+effect. It basically disables the function of cpucon. This state is entered
+upon interrupts or faults. In contrast, supervisory mode is a state which
+allows the modification of system registers.
+
+When the CPU is not in the SYSTEM state it is said to be in the APPLICATION
+state. In the APPLICATION state, global interrupt enable, paging and user mode
+are active depending on GIE, PGE and USR bits. The APPLICATION state can only
+be entered by turning on GIE and then touching pc (by making a goto or return).
+
+The CPU starts in the APPLICATION state but in supervisory mode (with GIE, PGE
+and USR off).
+________________________________________________________________________________
+RETFIE
+Normally returning from a subroutine is done by directly modifying the pc
+register. To differentiate this from returning from supervisory mode another
+register is used: retfie.
+
+This is simply an alias to the pc register with the side-effect of enabling the
+APPLICATION state. This means we don't need to worry about when and how to
+modify cpucon and pc.
+
+The retfie register shares the same register address as trap. Since traps are
+only meaningful in user mode, it is not really useful in supervisory mode except
+for read-only access to the trap value. Therefore, writing to the trap register
+in supervisory mode is used to write to retfie.
+
+The side-effects of writing to retfie are:
+- cpucon features gets enabled.
+- CPU goes out of the SYSTEM state.
+- trap value is reset to zero.
+________________________________________________________________________________
+Repeat:
+
+In designing earlier CPUs I experimented with a dedicated counter hardware for
+loops. The result was that with a properly designed ALU, a dedicated counter
+gives little advantage while complicating hardware.
+
+Unlike conventional designs, MM16 is a pure move machine. Its basic operation is
+essentially memory to memory moves (via register addresses). For an architecture
+such as this, a loop counter is very useful in doing large bulk memory copies.
+It may also be useful for doing multiple ALU operations such as summing up
+an array of numbers.
+
+One simple implementation of a dedicated loop counter is a repeat register. This
+is a single 16 bit loop counter. When written to, the counter starts counting
+down and executes the following instruction until it reaches zero. This scheme
+has the advantage of only using one register address and a executes the repeated
+code on every instruction cycle.
+
+Consider a memcpy code. MM16 can do fast memory to memory copy by utilising the
+two stacks: stk and pst. Although the pst is meant to keep track of return
+addresses, it can be used to access any part of memory thus used to access data.
+The following code does a fast memory to memory copy conventionally:
+
+	acu = COUNT ; initialise counter (how many words we want to copy)
+	pst = SOURCE
+	stk = DESTINATION
+
+	:LOOP
+		stk = pst  ; copy data accross
+		sub = 1    ; count down
+		pc n= LOOP ; loop while not zero
+
+With the help of the repeat register, the code becomes much simpler and faster:
+
+	pst = SOURCE
+	stk = DESTINATION
+
+	repeat = COUNT  ; repeat the instruction below COUNT number of times
+	stk = pst       ; copy data accross
+
+Without the repeat register, the copy takes COUNT x 3 instruction cycles. With
+the repeat register, it only takes COUNT instructions cycles. The repeat
+register gives us a 300% speed improvement and 33% code size improvement for
+memory copy operations.
+
+In some inplementations, repeat can be even faster. Since the instruction is
+latched during repeats there is no need to do an instruction fetch. Therefore
+the instruction can move data even during the instruction fetch part of the
+cycle. This effectively doubles the execution rate. The example above will then
+have a 600% speed improvement. Not bad for a small modification in hardware.
+________________________________________________________________________________
+Possible Problems with repeat.
+A simple implementation of repeat simply freezes the program counter on the next
+instruction until the repeat value reaches zero. This means that repeats will
+not work properly for literal values. For example:
+
+	repeat = 20
+	stk = lit
+	0x0000
+
+This is because literal instructions take up 2 words and requires the program
+counter to be advanced in order to fetch the literal value. In this case, the
+CPU can either ignore the repeat instruction or signal a fault. Ignoring and
+resetting repeat is probably the better option.
+
+The obvious wrok-around for this is to temporarily save the literal value
+somewhere first:
+
+	acu = lit 0x0000
+	repeat = 20
+	stk = acu
+
+Another problem with implementing repeats is the question of how to handle
+interrupts and faults during repeats. This is a difficult problem since both
+the interrupt and fault handling systems rely on the program counter to save
+and restore the interrupted instruction stream. A repeated instruction does
+not depend on the program counter but instead uses the repeat counter to
+execute.
+
+In repeated state, the program counter is essentially frozen. If the program
+is interrupted, then simply returning from interrupt by jumping via pc will
+abort the repeat and continues executing the following instructions. The
+interrupt handling mechanisms must therefore preserve the repeat state so
+that resuming a repeated instruction will work. The other option is to not
+allow repeat to be used when interrupt is enabled. The first option is
+obviously preferable.

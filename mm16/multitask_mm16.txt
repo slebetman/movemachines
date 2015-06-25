@@ -1,0 +1,124 @@
+Simple Multitasking on MM16
+===========================
+One of the reasons mm16 have turned out the way it did is because I wanted a
+processor capable of implementing multitasking. What I wanted was the ability to
+freely replace a running process with another - to context switch.
+
+MM16 is my first CPU able to properly context switch. This is mainly due to the
+software managed call stack. Since the call stack is located completely in ram,
+a scheduler can manage multiple call stacks of different tasks.
+
+MM16 has very few registers to save when context switching. This makes MM16 very
+fast in handling multitasking. There are only 7 registers that needs to be
+saved: cpucon, ret(pc), psp, acu, stp, mpa and mpb. In addition, if paging is
+enabled, we need to make sure that the process id in the pg register is updated
+accordingly.
+
+The registers involved:
+    .____________.
+ 02 |    PC      |  ret - return address
+ 03 |____________|  psp - program stack pointer
+    .            .
+    .____________.
+ 05 |____________|  acu - accumulator
+    .            .
+    .____________.
+ 0b |____________|  stp - general purpose stack pointer  
+    .            .
+    .________    .
+ 0e |________|      mpa (only the upper 12 bits are used)
+ 0f |________|      mpb (only the upper 12 bits are used)
+    .            .
+    .____________.
+ 11 |____________|  cpucon (cpu control register)
+ 12 |____________|  pg  (page register)
+    .            .
+
+There are several ways to save the CPU context but one of the easiest is to save
+the registers in the program stack (pst). The order that the registers are saved
+must be the reverse of the order which they will be restored. Therefore it makes
+most sense to first save ret. When restoring the context of the task, ret will
+be used last to return from the task switcher.
+
+In saving registers to the program stack, we only need to keep track of psp.
+This means psp is the only register not stored in the stack. After all other
+registers are saved, the task switcher may freely use all of the resources
+available except the program stack. This allows the task switcher to alter
+either mpa, mpb or stp to point to an area of memory it owns in order to save
+psp.
+
+The following is an example of a simple task switcher:
+
+    .......................................................................	
+	# This design assumes a simple round-robin scheduler.
+
+	############################################################
+	# Make sure that paging is not disabled when calling this! #
+	############################################################
+	:TASK_SWITCH
+		# disable GIE
+		cpucon = 0x0001
+		# now we can read ret without triggering interrupt
+		
+		# save context
+		pst = ret
+		pst / cpucon ; save carry
+		pst = acu
+		pst = stp
+		pst = mpa
+		pst = mpb
+
+		# disable paging
+		cpucon = 0x0004
+		#--------------------------------------- real mode:
+		
+		# time to save psp
+		# first we need to access our task queue
+		mpa = switch_vars
+		acu = ma0   ; location of task queue
+		add = ma1   ; task index
+		stp = acu   ; point to current task slot
+		std = psp   ; save psp
+		
+		# now its time to load next scheduled task
+		add = 1
+		stp = acu   ; point to next task
+		sub = ma2   ; number of tasks on the queue
+		pc c= next1 ; check if we are at end of queue
+		stp = ma0   ; go to start of queue if end
+		ma1 = 0     ; set task index to beginning
+		pc = next2
+
+		:next1
+		acu = ma1   ; increment task index
+		add = 1
+		ma1 = acu   ; update task index
+
+		:next2
+		# change process id to task index
+		pg - ma1
+
+		# point to program stack
+		psp = std
+		
+		# enable paging
+		cpucon = 0x0008
+		#-------------------------------------- paged mode:
+
+		# restore context
+		mpb = pst
+		mpa = pst
+		stp = pst
+		acu = pst
+		cpucon \ pst ; restore carry
+
+		cpucon = 0x002a ; restore GIE, USR and PGE
+		return
+
+		# 33 instructions, 43 words.
+    .......................................................................
+
+Note that in the above example, context is saved and restored in paged mode.
+This is because we want to save the context of each process in its own address
+space. In this way we only need to keep track of psp.
+
