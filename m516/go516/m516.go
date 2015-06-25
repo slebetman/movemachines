@@ -67,7 +67,7 @@ func (c *CPU) Decode(instruction Word) {
 	format := instruction >> 14
 
 	if format == 0 {
-		c.copy(Addr((instruction>>7)&0x7f), Addr(instruction&0x7f))
+		c.copy(Addr(instruction>>7), Addr(instruction&0x7f))
 	} else if format == 1 {
 		c.literal(Addr((instruction>>12)&0x03), instruction&0xfff)
 	} else {

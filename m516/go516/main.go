@@ -75,5 +75,5 @@ func main() {
 
 	fmt.Println(freq(float64(cpu.instCount) / (float64(lapsed) / float64(time.Second))))
 
-	cpu.ram.dump(0, 0xff)
+	// cpu.ram.dump(0, 0xff)
 }

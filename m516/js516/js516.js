@@ -1,63 +1,17 @@
 #! /usr/bin/env node
 
-Array.prototype.stride = function(callback,undef) {
-	var stride_length = callback.length;
-	var ret = [];
-	var l=0;
-	for (var i=0; i<this.length; i+=stride_length) {
-		var slice = this.slice(i,i+stride_length);
-		if (i+stride_length > this.length) {
-			for (var j=this.length%stride_length; j<stride_length; j++) {
-				slice[j] = undef;
-			}
-		}
-		ret.push(callback.apply(l,slice));
-		l++;
-	}
-	return ret;
-}
+var hex = require('hex');
+var Memory = require('memory');
+var Registers = require('registers');
 
 var instCount = 0;
-var reg = [];
 var PC = 0;
 var ACU = 0;
 var RET = 0;
 var A_PTR = 0;
 var CARRY = 0;
 
-var dummy = {
-	read : function () {return 0x0000},
-	write : function (val) {},
-};
-
-for (var i=0;i<=0x7f;i++) {
-	reg[i] = Object.create(dummy); // initialize registers to dummy
-	reg[i].name = {};
-	reg[i].name.read = 'unused';
-	reg[i].name.write = 'unused';
-}
-
-reg.address = {};
-
-function Memory () {}
-
-Memory.prototype = Object.create(Array.prototype);
-Memory.prototype.clear = function () {
-	for (var i=0; i<=0xffff; i++) {
-		this.set(i,0);
-	}
-};
-Memory.prototype.set = function (i,v) {
-	i = i & 0xffff;
-	this[i] = v;
-	if (i >= this.length) this.length = i+1;
-	this.onchange(i,v);
-};
-Memory.prototype.get = function (i) {
-	return this[i];
-};
-Memory.prototype.onchange = function (i,v) {};
-
+var reg = new Registers(0x7f);
 var RAM = new Memory();
 RAM.clear();
 
@@ -92,27 +46,16 @@ var decode = (function(){
 	}
 })();
 
-
-
-function defineRegister (addr, type, name, fn) {
-	reg[addr][type] = fn;
-	reg[addr].name[type] = name;
-}
-
 function R (addr, name, fn) {
-	reg.address[name] = addr;
-	defineRegister(addr,'read',name,fn);
+	reg.R(addr,name,fn);
 }
 
 function W (addr, name, fn) {
-	reg.address[name] = addr;
-	defineRegister(addr,'write',name,fn);
+	reg.W(addr, name, fn);
 }
 
 function plainRegister (addr, name) {
-	reg[name] = 0;
-	R(addr,name,function(){return reg[name]});
-	W(addr,name,function(v){reg[name] = v});
+	reg.plain(addr,name);
 }
 
 // plainRegister(0x00,'acu');
@@ -234,28 +177,7 @@ function exec () {
 	decode(instruction);
 }
 
-function hex (n,digits) {
-	if (!digits) digits = 4;
-	return ('0000' + n.toString(16)).substr(-digits);
-}
-hex.format = function (digits) {
-	return function (n) {
-		return hex(n,digits);
-	}
-};
-
-function dumpRegisters (from, to) {
-	for (var i=from;i<=to;i++) {
-		if (reg[i].name.write != reg[i].name.read) {
-			console.log(hex(i,2) + ': ' + reg[i].name.write + ' / ' + reg[i].name.read);
-		}
-		else {
-			console.log(hex(i,2) + ': ' + reg[i].name.write);
-		}
-	}
-}
-
-// dumpRegisters(0x00, 0x35);
+// reg.dump(0x00, 0x35);
 
 function asm (dst,src) {
 	return (reg.address[dst] << 7) | reg.address[src]
@@ -340,13 +262,7 @@ var program2 = [
 	20
 ];
 
-function loadRAM (arr) {
-	for (var i=0; i<arr.length; i++) {
-		RAM.set(i,arr[i]);
-	}
-}
-
-loadRAM(program2);
+RAM.load(program2);
 
 
 RAM.onchange = function (i,v) {
@@ -375,14 +291,10 @@ function freq (hz) {
 }
 
 console.log(freq(instCount/((end-start)/1000)));
+console.log('instructions executed:' + instCount + ', elapsed time:' + (end-start)/1000);
+console.log('elapsed time assuming 5MHz: ' + instCount/5000000);
 
-function dumpRAM (from,to) {
-	return RAM.slice(from,to+1).map(hex.format(4)).stride(function(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) {
-		return [hex(this*16+from) + ':',a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p].join(' ');
-	}).join("\n");
-}
-
-// console.log(dumpRAM(0,0xff));
+// console.log(RAM.dump(0,0xff));
 
 // clear();
 // 
