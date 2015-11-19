@@ -5,7 +5,7 @@ read_callback R[0x10];
 word Val[0x10];
 
 void defaultWrite (word val) {}
-word defaultRead () {}
+word defaultRead () {return 0;}
 
 void initRegisters () {
 	address i;
