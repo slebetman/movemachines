@@ -20,13 +20,13 @@ a page fault is generated and the OS must insert the requested page number into
 the cache.
                                   offset
  Virtual Address ========+----------------------[+]======> Physical Address
-                         |                       |
-                         |                       |
-                         | page number           |
-                       __|__________             | page location
-                      |______|______|            |
-                      |______|______|------------'
-                      |______|______|
+                         │                       │
+                         │                       │
+                         │ page number           │
+                      ┌──┴───┬──────┐            │ page location
+                      ├──────┼──────┤            │
+                      ├──────┼──────┼────────────┘
+                      └──────┴──────┘
                            cache
 
 In this scheme the hardware only needs to support a simple one level paging.
@@ -100,9 +100,9 @@ The following is the format of cpucon:
     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
    |_ _|_ _ _ _ _ _ _|_|_ _|_ _|_ _|
      .   reserved     .  .   .   .
-     |                |  |   |   |
-     C                |  |   |   '--- GIE
-               PGC----'  |   '----- PGE
+     │                │  │   │   │
+     C                │  │   │   └─── GIE
+               PGC────┘  │   └───── PGE
                         USR
 
 This register has read/write access. When read, cpucon returns its current
@@ -175,18 +175,18 @@ When the upper 8 bits of pg are written to, the virtual and physical page
 numbers along with the process id are cached by the CPU hardware.
                 _____ ______
   pg register: |_____|______|
-                ^  |      |
-   ______       |  |__    |
-  |______|------+     |   '-----.
- requested      |     |         |
-   page    .--->|     |         |
-           |   _v___ _v___      |
-           |  |_____|_____|     |
-           |  |_____|_____|     |
-           |  |_____|_____|     |
-           |       page         |
-           |       cache        |
-           '--------------------'
+                ^  |      │
+   ______       │  └──┐   │
+  |______|──────┤     │   └─────┐
+ requested      │     │         │
+   page    ┌───>│     │         │
+           │   _v___ _v___      │
+           │  |_____|_____|     │
+           │  |_____|_____|     │
+           │  |_____|_____|     │
+           │       page         │
+           │       cache        │
+           └────────────────────┘
 
 Needless to say, the byte transfer modes should be used with this register.
 ________________________________________________________________________________

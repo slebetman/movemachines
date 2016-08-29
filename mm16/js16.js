@@ -12,6 +12,17 @@ var STP = 0;
 var CARRY = 0;
 var MPA = 0;
 var MPB = 0;
+var INT = 0;
+var CPUCON_USR = false;
+var CPUCON_PGE = false;
+var CPUCON_GIE = false;
+var PG = 0;
+var TRAP = 0;
+var INTERRUPT_TRAP = 7;
+var RFI = 0;
+var SBUF = 0;
+var REPEAT = 0;
+var INTERRUPTED = false;
 
 var reg = new Registers(0x3f);
 var RAM = new Memory();
@@ -62,6 +73,37 @@ function W (addr, name, fn) {
 function plainRegister (addr, name) {
 	reg.plain(addr,name);
 }
+
+function setBit (val, bit) {
+	return (val | (1 << bit)) & 0xffff;
+}
+
+function clearBit (val, bit) {
+	return (val & (~(1 << bit))) & 0xffff;
+}
+
+function getBit (val, bit) {
+	return (val & (1 << bit)) & 0xffff;
+}
+
+function interrupt (source) {
+	if (!INTERRUPTED && CPUCON_GIE) {
+		source &= 0xff;
+		if (getBit(INT, 8+source)) {
+			INTERRUPTED = true;
+			setBit(INT,source);
+			RFI = PC; PC = 0x0002; // ISR location
+		}
+	}
+}
+
+function interrupt_return (v) {
+	INTERRUPTED = false;
+	INT = INT & 0xff00; // clear interrupt source bits
+	PC = v;
+}
+
+function clear_paging_table () {}
 
 W(0x00,'lit',function(v){});
 R(0x00,'lit',function(){
@@ -127,9 +169,53 @@ W(0x0c,'stk',function(v){
 R(0x0d,'std',function(){return RAM[STP]});
 W(0x0d,'std',function(v){RAM.set(STP,v)});
 W(0x0e,'mpa',function(v){MPA = v & 0xfff0});
-R(0x0e,'mpa',function(v){return MPA});
+R(0x0e,'mpa',function(){return MPA});
 W(0x0f,'mpb',function(v){MPB = v & 0xfff0});
-R(0x0f,'mpb',function(v){return MPB});
+R(0x0f,'mpb',function(){return MPB});
+
+W(0x10,'int',function(v){INT = (INT & 0x00ff) | (v & 0xff00)});
+R(0x10,'int',function(){return INT});
+W(0x11,'cpucon',function(v){
+	if (getBit(v,0)) CPUCON_GIE = false;
+	if (getBit(v,1)) CPUCON_GIE = true;
+	if (getBit(v,2)) CPUCON_PGE = false;
+	if (getBit(v,3)) CPUCON_PGE = true;
+	if (getBit(v,4)) CPUCON_USR = false;
+	if (getBit(v,5)) CPUCON_USR = true;
+	
+	if (getBit(v,6)) clear_paging_table();
+	
+	if (getBit(v,14)) CARRY = 0;
+	if (getBit(v,15)) CARRY = 1;
+});
+R(0x11,'cpucon',function(){
+	var ret = 0x0000;
+	
+	if (CARRY) ret = setBit(ret,15);
+	else ret = setBit(ret,14);
+	
+	if (CPUCON_GIE) ret = setBit(ret,1);
+	else ret = setBit(ret,0);
+	
+	if (CPUCON_PGE) ret = setBit(ret,3);
+	else ret = setBit(ret,2);
+	
+	if (CPUCON_USR) ret = setBit(ret,5);
+	else ret = setBit(ret,4);
+	
+	return ret;
+});
+// 0x12 is paging register
+W(0x13,'trap',function(v){
+	TRAP = v;
+	interrupt(INTERRUPT_TRAP);
+});
+R(0x13,'trap',function(){return TRAP});
+W(0x14,'rfi',interrupt_return);
+R(0x14,'rfi',function(){return RFI});
+W(0x15,'sbuf',function(v){SBUF = v});
+R(0x15,'sbuf',function(){return SBUF});
+// 0x16 is repeat
 
 for (var i=0x20,m=0;i<=0x2f;i++,m++) {
 	R(i,'ma'+m,function(offset){
@@ -167,23 +253,23 @@ function exec () {
 function asm (dst,op,src) {
 	var inst = (reg.address[dst] << 8) | reg.address[src];
 	switch (op) {
-		case '=': break;
-		case 'z=': inst |= (1 << 6); break;
-		case 'nz=': inst |= (2 << 6); break;
-		case 'c=': inst |= (3 << 6); break;
-		case '/': inst |= (1 << 14); break;
-		case 'z/': inst |= (1 << 14) | (1 << 6); break;
-		case 'nz/': inst |= (1 << 14) | (2 << 6); break;
-		case 'c/': inst |= (1 << 14) | (3 << 6); break;
-		case '\\': inst |= (2 << 14); break;
-		case 'z\\': inst |= (2 << 14) | (1 << 6); break;
+		case '='   :                               break;
+		case 'z='  : inst |= (1 << 6);             break;
+		case 'nz=' : inst |= (2 << 6);             break;
+		case 'c='  : inst |= (3 << 6);             break;
+		case '/'   : inst |= (1 << 14);            break;
+		case 'z/'  : inst |= (1 << 14) | (1 << 6); break;
+		case 'nz/' : inst |= (1 << 14) | (2 << 6); break;
+		case 'c/'  : inst |= (1 << 14) | (3 << 6); break;
+		case '\\'  : inst |= (2 << 14);            break;
+		case 'z\\' : inst |= (2 << 14) | (1 << 6); break;
 		case 'nz\\': inst |= (2 << 14) | (2 << 6); break;
-		case 'c\\': inst |= (2 << 14) | (3 << 6); break;
-		case '-': inst |= (3 << 14); break;
-		case 'z-': inst |= (3 << 14) | (1 << 6); break;
-		case 'nz-': inst |= (3 << 14) | (2 << 6); break;
-		case 'c-': inst |= (3 << 14) | (3 << 6); break;
-		default : console.log('Invalid op: ' + op); process.exit();
+		case 'c\\' : inst |= (2 << 14) | (3 << 6); break;
+		case '-'   : inst |= (3 << 14);            break;
+		case 'z-'  : inst |= (3 << 14) | (1 << 6); break;
+		case 'nz-' : inst |= (3 << 14) | (2 << 6); break;
+		case 'c-'  : inst |= (3 << 14) | (3 << 6); break;
+		default    : console.log('Invalid op: ' + op); process.exit();
 	}
 	return inst;
 }
