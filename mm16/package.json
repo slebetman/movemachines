@@ -1,0 +1,11 @@
+{
+  "name": "mm16",
+  "version": "1.0.0",
+  "description": "MM16 Emulator",
+  "main": "main.html",
+  "window": {
+	"title": "MM16",
+	"toolbar": false,
+	"width": 800
+  }
+}
