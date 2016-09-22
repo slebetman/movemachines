@@ -1,5 +1,3 @@
-#! /usr/bin/env node
-
 var hex = require('hex');
 var Memory = require('memory');
 var Registers = require('registers');
@@ -28,9 +26,17 @@ var reg = new Registers(0x3f);
 var RAM = new Memory();
 RAM.clear();
 
+function log (msg) {
+	var l = document.createElement('div');
+	l.innerHTML = msg;
+	document.getElementById('logmsg').appendChild(l);
+}
+
 var decode = (function(){
 	function copy (dst,src,cond,mode) {
 		instCount ++;
+		
+		if (dst == 0) return; // lit as dest is a no-op
 		
 		if (cond == 0 ||(
 			cond == 1 && ACU == 0)||(
@@ -298,36 +304,89 @@ var program = [
 	18
 ];
 
-RAM.load(program);
+var program2 = [
+	asm('pc','=','lit'),     // 0
+	18,                      // 1
+	asm('pst','=','cpucon'), // 2 -- ISR, save cpucon
+	asm('pst','=','acu'),    // 3 -- save accumulator
+	asm('acu','=','int'),    // 4
+	asm('and','=','lit'),    // 5 -- check if TRAP
+	0x0080,                  // 6
+	asm('pcz','=','lit'),    // 7 -- GOTO ISR_END if not TRAP
+	12,                      // 8
+	asm('add','=','pst'),    // 9 -- double
+	asm('cpucon','=','pst'), // 10
+	asm('rfi','=','rfi'),    // 11 -- return
+	asm('acu','=','pst'),    // 12
+	asm('cpucon','=','pst'), // 13
+	asm('rfi','=','rfi'),    // 14 -- return
+	0,                       // 15
+	0,                       // 16
+	0,                       // 17
+	asm('mpa','=','lit'),    // 18
+	40,                      // 19
+	asm('stp','=','lit'),    // 20
+	50,                      // 21
+	asm('int','=','lit'),    // 22
+	0x8000,                  // 23 -- enable TRAP
+	asm('cpucon','=','lit'), // 24
+	0x0002,                  // 25 -- enable GIE
+	asm('acu','=','lit'),    // 26
+	1,                       // 27
+	asm('trap','=','lit'),   // 28
+	0,                       // 29 -- cause a software interrupt
+	asm('ma0','=','acu'),    // 30
+	asm('pc','nz=','lit'),   // 31
+	28,                      // 32 -- loop until ACU overflow
+	asm('pc','=','lit'),     // 33 -- GOTO forever
+	33                       // 34
+];
+
+RAM.load(program2);
 
 
 RAM.onchange = function (i,v) {
 	// Amazingly this is fast!
-	if (i == MPA) {
-		process.stdout.write('\rma0 = ' + hex(v) + '  ');
-	}
+	// if (i == MPA) {
+	// 	process.stdout.write('\rma0 = ' + hex(v) + '  ');
+	// }
+	if (i == MPA) document.getElementById('stat').innerHTML = 'ma0 = ' + hex(v);
 };
+
+function exec_loop (callback) {
+	//var i=500000;
+	var i=1;
+	var END = 33;
+	
+	while (i--) {
+		if (PC >= END) break
+		exec();
+	}
+	if (PC < END) {
+		setTimeout(function(){
+			exec_loop(callback);
+		},100);
+	}
+	else callback();
+}
  
 var start = Date.now();
-while (PC < 19) {
-	exec();
-}
-var end = Date.now();
-
-
-
-function freq (hz) {
-	if (hz < 1000) return hz.toFixed(2) + ' Hz';
-	hz /= 1000;
-	if (hz < 1000) return hz.toFixed(2) + ' kHz';
-	hz /= 1000;
-	if (hz < 1000) return hz.toFixed(2) + ' MHz';
-	hz /= 1000;
-	if (hz < 1000) return hz.toFixed(2) + ' GHz';
-}
-
-console.log(freq(instCount/((end-start)/1000)));
-console.log('instructions executed:' + instCount + ', elapsed time:' + (end-start)/1000);
-console.log('elapsed time assuming 5MHz: ' + instCount/5000000);
-
-// console.log(RAM.dump(0,0x1f));
+exec_loop(function(){
+	var end = Date.now();
+	
+	function freq (hz) {
+		if (hz < 1000) return hz.toFixed(2) + ' Hz';
+		hz /= 1000;
+		if (hz < 1000) return hz.toFixed(2) + ' kHz';
+		hz /= 1000;
+		if (hz < 1000) return hz.toFixed(2) + ' MHz';
+		hz /= 1000;
+		if (hz < 1000) return hz.toFixed(2) + ' GHz';
+	}
+	
+	log(freq(instCount/((end-start)/1000)));
+	log('instructions executed:' + instCount + ', elapsed time:' + (end-start)/1000);
+	log('elapsed time assuming 5MHz: ' + instCount/5000000);
+	
+	// console.log(RAM.dump(0,0x1f));
+});	
