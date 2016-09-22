@@ -1,4 +1,4 @@
-MM16 - Simple 16bit Move Machine
+M016 - Simple 16bit Move Machine
 ================================
 This is a slight modification of mm16.
 
