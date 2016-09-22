@@ -90,14 +90,16 @@ W(0x07,'pczd',function(v){if (RAM[DP]==0) PC = v});
 R(0x08,'Cp',function(){return CP});
 W(0x08,'Cp',function(v){CP = v});
 R(0x09,'C',function(){return RAM[CP]});
-W(0x09,'C',function(v){RAM.set(CP,v)});
+// W(0x09,'C',function(v){RAM.set(CP,v)});
+W(0x09,'C',function(v){RAM[CP] = v});
 R(0x0a,'C-',function(){
 	CP--;
 	return RAM[CP+1];
 });
 W(0x0a,'+C',function(v){
 	CP++;
-	RAM.set(CP,v);
+	// RAM.set(CP,v);
+	RAM[CP] = v;
 });
 R(0x0b,'C+',function(){
 	CP++;
@@ -105,20 +107,23 @@ R(0x0b,'C+',function(){
 });
 W(0x0b,'-C',function(v){
 	CP--;
-	RAM.set(CP,v);
+	// RAM.set(CP,v);
+	RAM[CP] = v;
 });
 
 R(0x0c,'Dp',function(){return DP});
 W(0x0c,'Dp',function(v){DP = v});
 R(0x0d,'D',function(){return RAM[DP]});
 W(0x0d,'D',function(v){RAM.set(DP,v)});
+// W(0x0d,'D',function(v){RAM[DP] = v});
 R(0x0e,'-D',function(){
 	DP--;
 	return RAM[DP];
 });
 W(0x0e,'D+',function(v){
 	DP++;
-	RAM.set(DP-1,v);
+	// RAM.set(DP-1,v);
+	RAM[DP-1] = v;
 });
 R(0x0f,'+D',function(){
 	DP++;
@@ -126,7 +131,8 @@ R(0x0f,'+D',function(){
 });
 W(0x0f,'D-',function(v){
 	DP--;
-	RAM.set(DP+1,v);
+	// RAM.set(DP+1,v);
+	RAM[DP+1] = v;
 });
 
 function exec () {
