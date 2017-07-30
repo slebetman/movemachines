@@ -214,7 +214,7 @@ are used for masking individual interrupt source. The lower 8 bits signals the
 source of the interrupt.
 
 It is possible for more than one source to trigger an interrupt. The interrupt
-service routine is responsible to decode the triggering interrupt source and
+service routine is responsible for decoding the triggering interrupt source and
 running the appropriate routine in response.
 
 The CPU starts up with interrupts disabled. The cpucon register is used to

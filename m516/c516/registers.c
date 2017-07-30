@@ -2,7 +2,7 @@
 
 write_callback W[0x10];
 read_callback R[0x10];
-word Val[0x10];
+word Val[0x40];
 
 void defaultWrite (word val) {}
 word defaultRead () {return 0;}

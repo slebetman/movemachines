@@ -38,6 +38,8 @@
 #-----------------------------------------------
 
 device LED7 "7 segment LED" {
+	proc red {} {return "#ff6666"}
+
 	proc init {} {
 		# don't allow more than 1
 		if {[winfo exists .led7] == 0} {
@@ -47,7 +49,7 @@ device LED7 "7 segment LED" {
 				"2" nothing {LED7write lcd2} \
 				"3" nothing {LED7write lcd3}] {
 				toplevel .led7
-				pack [canvas .led7.c -width 170 -height 70 -bg grey70]
+				pack [canvas .led7.c -width 170 -height 70 -bg grey60]
 				wm resizable .led7 0 0
 				LED7draw .led7.c lcd3 10 5
 				LED7draw .led7.c lcd2 50 5
@@ -85,7 +87,7 @@ device LED7 "7 segment LED" {
 	proc LED7write {name val {mode 0}} {
 		for {set x 0} {$x < 8} {incr x} {
 			if {[expr $val & (1 << $x)] != 0} {
-				.led7.c itemconfigure $name.$x -fill red
+				.led7.c itemconfigure $name.$x -fill [red]
 			} else {
 				.led7.c itemconfigure $name.$x -fill grey
 			}

@@ -50,7 +50,7 @@ device LED7 "7 segment LED" {
 				"0 & 1" nothing {LED7write lcd0} \
 				"2 & 3" nothing {LED7write lcd1}] {
 				toplevel .led7
-				pack [canvas .led7.c -width 170 -height 70 -bg grey70]
+				pack [canvas .led7.c -width 170 -height 70 -bg grey60]
 				wm resizable .led7 0 0
 				LED7draw .led7.c lcd1.1 10 5
 				LED7draw .led7.c lcd1.0 50 5

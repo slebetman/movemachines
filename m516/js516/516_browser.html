@@ -1,4 +1,25 @@
 <html>
+<head>
+	<link rel="stylesheet" type="text/css" href="516_browser.css"></link>
+	<script src="ui.js"></script>
 	<script src="516_browser.js"></script>
-	m516 Emulator
+</head>
+<body>
+	<div id="top">
+	<h1>m516 Emulator</h1>
+	<div id="inst-container">
+		Instruction: [
+			<span id="inst"></span>
+		]
+	</div>
+	<button onclick="run()">Run</button>
+	</div>
+	<div id="middle">
+		<div id="memory">
+		</div>
+	</div>
+	<div id="bottom">
+		<div id="logger"></div>
+	</div>
+</body>
 </html>

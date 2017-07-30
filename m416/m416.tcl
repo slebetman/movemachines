@@ -79,6 +79,8 @@ proc mergeRam {} {
 
 ################################################# GUI
 
+proc uiFont {} {return {"DejaVu Sans Mono" 10}}
+
 proc makeGUI {} {
 	global ram
 	pack [frame .b] -fill x -side bottom
@@ -95,7 +97,7 @@ proc makeGUI {} {
 	pack [label .f.ram -text "RAM"] -side left -expand 1
 	pack [button .f.ld -text "Load" -command {loadRam}] -side right
 	pack [listbox .f.f.l -yscrollcommand {.f.f.s set} -width 13 \
-		-font {Courier 8} -listvariable ram -selectmode single] \
+		-font [uiFont] -listvariable ram -selectmode single] \
 		-fill both -side left
 	pack [scrollbar .f.f.s -orient vertical -command {.f.f.l yview}] \
 		-fill y -side right
@@ -136,7 +138,7 @@ proc makeCDisplay {} {
 	set yy 40
 	foreach {x y} {one/add 01 nil/and 02 all/or 03 rsh/xor 04} {
 		.c create text 370 $yy -text "$x:$y" -anchor e \
-			-font {Courier 8}
+			-font [uiFont]
 		incr yy 10
 	}
 	
@@ -145,10 +147,10 @@ proc makeCDisplay {} {
 		355 160
 	} -arrow first
 	label .c.acu -textvariable register(acu) \
-		-bg white -font {Courier 8} -width 6 -relief sunken
+		-bg white -font [uiFont] -width 6 -relief sunken
 	.c create window {290 135} -window .c.acu -anchor sw
 	.c create text {288 130} -text "acu:00" -anchor se \
-		-font {Courier 8}
+		-font [uiFont]
 	.c create line {
 		315 90
 		315 115
@@ -162,16 +164,16 @@ proc makeCDisplay {} {
 		-state disabled -value 1
 	.c create window {400 130} -window .c.carry -anchor e
 	.c create text {400 130} -text "carry" -anchor w \
-		-font {Courier 8}
+		-font [uiFont]
 	
 	# address control #######
 	set yy 114
 	foreach {x y} {psp 13 mp 15 stp 05 pc 11} {
 		label .c.$x -textvariable register($x) \
-			-bg white -font {Courier 8} -width 6 -relief sunken
+			-bg white -font [uiFont] -width 6 -relief sunken
 		.c create window 96 $yy -window .c.$x -anchor sw
 		.c create text 94 [expr $yy - 5] -text "$x:$y" -anchor se \
-			-font {Courier 8}
+			-font [uiFont]
 		incr yy -21
 	}
 	.c create line {
@@ -180,10 +182,10 @@ proc makeCDisplay {} {
 	} -arrow both
 	incr yy 84
 	label .c.ret -textvariable register(ret) \
-		-bg white -font {Courier 8} -width 6 -relief sunken
+		-bg white -font [uiFont] -width 6 -relief sunken
 	.c create window 200 $yy -window .c.ret -anchor sw
 	.c create text 198 [expr $yy - 5] -text "ret:12" -anchor se \
-		-font {Courier 8}
+		-font [uiFont]
 	.c create line \
 		215 $yy \
 		215 160 \
@@ -198,10 +200,10 @@ proc makeCDisplay {} {
 	set yy 185
 	foreach {x y} {std 06 stk 07 pst 14} {
 		label .c.$x -textvariable register($x) \
-			-bg white -font {Courier 8} -width 6 -relief sunken
+			-bg white -font [uiFont] -width 6 -relief sunken
 		.c create window 95 $yy -window .c.$x -anchor nw
 		.c create text 93 [expr $yy + 5] -text "$x:$y" -anchor ne \
-			-font {Courier 8}
+			-font [uiFont]
 		incr yy 21
 	}
 	.c create line {
@@ -219,11 +221,11 @@ proc makeCDisplay {} {
 	for {set y 0} {$y < 8} {incr y} {
 		set reg m$y
 		label .c.$reg -textvariable register($reg) -bg white \
-			-padx 0 -pady 0 -width 6 -font {Courier 8} -relief sunken
+			-padx 0 -pady 0 -width 6 -font [uiFont] -relief sunken
 		.c create window $xx $yy -window .c.$reg -anchor nw
 		.c create text [expr $xx-3] [expr $yy+5] \
 			-text "m$y:[format %02x [expr $y+8]]" \
-			-anchor ne -font {Courier 8}
+			-anchor ne -font [uiFont]
 		incr yy 19
 	}
 	.c create line \
@@ -236,7 +238,7 @@ proc makeCDisplay {} {
 		-arrow both
 	
 	label .c.instruction -textvariable instruction \
-		-font {Courier 8} -width 20
+		-font [uiFont] -width 20
 	.c create window 130 0 -window .c.instruction -anchor nw
 	
 	# Color registers accessible from packed insturction:

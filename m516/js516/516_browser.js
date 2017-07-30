@@ -1,3 +1,5 @@
+var LOOP_TIMER = 1213121;
+
 Array.prototype.stride = function(callback,undef) {
 	var stride_length = callback.length;
 	var ret = [];
@@ -273,10 +275,12 @@ for (var i=0x08,m=0;i<=0x27;i++,m++) {
 	}(m));
 }
 
+var batchcount=0;
 function exec () {
 	var instruction = RAM[PC];
 	PC ++;
 	decode(instruction);
+	batchcount++;
 }
 
 // reg.dump(0x00, 0x35);
@@ -306,6 +310,30 @@ function asmlit (dst,val) {
 	if (val > 0xfff) throw "lit too big";
 	
 	return 0x4000 | (dst<<12) | val;
+}
+
+function disasm (inst,next) {
+	if (inst & 0x8000) { // packed
+		// return instCount + ' [' + PC + ']: ' + 
+		return reg[(inst>>12)&0x07].name['write'] + ' = ' +
+			reg[(inst>>8)&0x0f].name['read'] + ' , ' +
+			reg[(inst>>4)&0x0f].name['write'] + ' = ' +
+			reg[inst&0x0f].name['read']; 
+	}
+	else if (inst & 0x4000) { // lit
+		// return instCount + ' [' + PC + ']: ' +
+		return reg[(inst>>12)&0x03].name['write'] + ' = lit ' + (inst & 0x0fff);
+	}
+	else if ((inst & 0x7f) === reg.address.lit) {
+		// return instCount + ' [' + PC + ']: ' + inst.toString(16) + ' ' +
+		return reg[(inst>>7)&0x7f].name['write'] + ' = ' +
+			reg[inst&0x7f].name['read'] + ' ' + next;
+	}
+	else {
+		// return instCount + ' [' + PC + ']: ' +
+		return reg[(inst>>7)&0x7f].name['write'] + ' = ' +
+			reg[inst&0x7f].name['read'];
+	}
 }
 
 var program1 = [
@@ -374,6 +402,28 @@ function freq (hz) {
 	if (hz < 1000) return hz.toFixed(2) + ' GHz';
 }
 
+function log (txt) {
+	var logger = get('logger')
+	logger.innerHTML += '<br>' + txt;
+	logger.scrollTop = logger.scrollHeight;
+	console.log(txt);
+}
+
+function execLoop (callback) {
+	while (PC < 20) {
+		exec();
+		if (batchcount % LOOP_TIMER == 0) {
+			get('inst').innerHTML = disasm(RAM[PC],RAM[PC+1]);
+			return setTimeout(function(){
+				execLoop(callback);
+			},0);
+		}
+	}
+	get('inst').innerHTML =
+		disasm(RAM[PC],RAM[PC+1]);
+	callback();
+}
+
 function run () {
 	PC = 0;
 	instCount = 0;
@@ -388,16 +438,15 @@ function run () {
 	// 		}
 	// 	}
 	// };
-	 
+	
 	var start = Date.now();
-	while (PC < 20) {
-		exec();
-	}
-	var end = Date.now();
-	
-	console.log(freq(instCount/((end-start)/1000)));
-	console.log('instructions executed:' + instCount + ', elapsed time:' + (end-start)/1000);
-	console.log('elapsed time assuming 5MHz: ' + instCount/5000000);
-	
-	// console.log(RAM.dump(0,0xff));
+	execLoop(function(){
+		var end = Date.now();
+		
+		log(freq(instCount/((end-start)/1000)));
+		log('instructions executed:' + instCount + ', elapsed time:' + (end-start)/1000);
+		log('elapsed time assuming 5MHz: ' + instCount/5000000);
+		
+		// console.log(RAM.dump(0,0xff));
+	});
 }

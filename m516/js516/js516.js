@@ -267,11 +267,18 @@ RAM.load(program2);
 
 RAM.onchange = function (i,v) {
 	// Amazingly this is fast!
-	if (i == reg['*m']) {
-		process.stdout.write('\rm0 = ' + hex(v) + '  ');
-	}
+	// if (i == reg['*m']) {
+	// 	process.stdout.write('\rm0 = ' + hex(v) + '  ');
+	// }
 };
- 
+
+while (PC < 20) {
+	exec();
+}
+
+PC = 0;
+instCount = 0;
+
 var start = Date.now();
 while (PC < 20) {
 	exec();
