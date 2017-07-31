@@ -4,6 +4,7 @@ html body {
 	display: flex;
 	flex-direction: column;
 	align-items: stretch;
+	height: calc(100vh - 10em - 40px);
 }
 h1 {
 	display: inline-block;
@@ -15,6 +16,7 @@ h1 {
 	flex-grow: 1;
 	display: flex;
 	flex-direction: row;
+	overflow: hidden;
 }
 #bottom {
 	display: flex;
@@ -29,7 +31,8 @@ h1 {
 	text-align: center;
 }
 #memory {
-	width: 8em;
+	width: 9em;
+	overflow: auto;
 }
 #logger {
 	margin-top: 10px;
