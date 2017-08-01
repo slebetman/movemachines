@@ -1,17 +1,13 @@
 {
-	"name" : "movemachines",
-	"description" : "Experimental Move Machines (Transfer Triggered Architecture)",
-	
-	"author" : "Adly Abdullah <slebetman@gmail.com>",
-	"version" : "1.0.0",
-	"license" : "BSD-2-Clause",
-	
-	"dependencies" : {
-		"array.stride" : "*"
+	"name": "movemachines",
+	"description": "Experimental Move Machines (Transfer Triggered Architecture)",
+	"author": "Adly Abdullah <slebetman@gmail.com>",
+	"version": "1.0.0",
+	"license": "BSD-2-Clause",
+	"dependencies": {
+		"array.stride": "*"
 	},
-	
-	"scripts" : {
+	"scripts": {
 		"postinstall": "bash -c 'cd node_modules;ln -sf ../lib/*.js .'"
 	}
 }
-

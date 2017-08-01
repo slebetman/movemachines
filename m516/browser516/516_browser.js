@@ -1,4 +1,4 @@
-var LOOP_TIMER = 1213121;
+var LOOP_TIMER = 1700001;
 
 Array.prototype.stride = function(callback,undef) {
 	var stride_length = callback.length;
@@ -312,7 +312,20 @@ function asmlit (dst,val) {
 	return 0x4000 | (dst<<12) | val;
 }
 
+function updateRegs () {
+	get('pc').innerHTML = hexify(PC);
+	get('acu').innerHTML = hexify(ACU);
+	get('ret').innerHTML = hexify(RET);
+	get('a_ptr').innerHTML = hexify(A_PTR);
+	get('b_ptr').innerHTML = hexify(reg[reg.address['*b']].read());
+	
+}
+
 function disasm (inst,next) {
+	highlightRAM(PC);
+	
+	updateRegs();
+	
 	if (inst & 0x8000) { // packed
 		// return instCount + ' [' + PC + ']: ' + 
 		return reg[(inst>>12)&0x07].name['write'] + ' = ' +

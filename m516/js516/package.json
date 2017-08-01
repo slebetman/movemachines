@@ -1,14 +1,11 @@
 {
-	"name" : "js516",
-	"description" : "Emulator for the m516 CPU",
-	
-	"author" : "Adly Abdullah <slebetman@gmail.com>",
-	"version" : "1.0.0",
-	"license" : "BSD-2-Clause",
-	"main" : "js516.js",
-	
-	"dependencies" : {
-		"blessed" : ">= 0.1.6"
+	"name": "js516",
+	"description": "Emulator for the m516 CPU",
+	"author": "Adly Abdullah <slebetman@gmail.com>",
+	"version": "1.0.0",
+	"license": "BSD-2-Clause",
+	"main": "js516.js",
+	"dependencies": {
+		"blessed": ">= 0.1.6"
 	}
 }
-
