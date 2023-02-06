@@ -178,9 +178,9 @@ RAM.load(program);
 
 RAM.onchange = function (i,v) {
 	// Amazingly this is fast!
-	// if (i == DP) {
-	// 	process.stdout.write('\rD = ' + hex(v) + '  ');
-	// }
+	if (i == DP) {
+		process.stdout.write('\rD = ' + hex(v) + '  ');
+	}
 };
  
 var start = Date.now();
