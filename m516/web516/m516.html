@@ -1,0 +1,445 @@
+<htm>
+<head>
+	<style>
+		* {
+			font-family: monospace;
+		}
+
+		#ram {
+			position: absolute;
+			width: 120px;
+			border-right: 1px solid black;
+			background-color: white;
+			height: calc(100vh - 30px);
+			overflow-y: scroll;
+			top: 30px;
+			left: 0;
+		}
+
+		#ram input {
+			width: 4em;
+			padding: 0;
+			margin: 0;
+			border: none;
+		}
+
+		#rtl {
+			width: calc(100vw - 120px);
+			height: 100vh;
+			top:0;
+			left: 120px;
+			background-color: lightgray;
+			position: absolute;
+		}
+
+		#address_decoding {
+			position: absolute;
+			top: 140px;
+			left: 50px;
+		}
+
+		#data_access {
+			position: absolute;
+			top: 270px;
+			left: 50px;
+		}
+
+		#memory_window {
+			position: absolute;
+			top: 270px;
+			left: 200px;
+		}
+
+		span.reg {
+			width: 4.5em;
+			border: 1px solid #777;
+			display: inline-block;
+			height: 1em;
+			margin: 0;
+			padding: 0;
+			margin-left: 5px;
+			text-align: center;
+			color: #333;
+			background-color: white;
+		}
+
+		span.pak {
+			background-color: #ff9;
+		}
+
+		div.col {
+			float: left;
+			margin-right: 12px;
+		}
+
+		div#ret-div {
+			position: absolute;
+			top: 194px;
+			left: 190px;
+		}
+
+		div#acu-div {
+			position: absolute;
+			top: 194px;
+			left: 365px;
+		}
+
+		#graphics {
+			position: absolute;
+			width: 1000px;
+			height: 700px;
+			top:8px;
+			left: 8px;
+		}
+
+		#alu {
+			background-color: white;
+			position: absolute;
+			width: 150px;
+			height: 100px;
+			top: 55px;
+			left: 415px;
+			padding: 5px;
+			border: 1px solid #777;
+		}
+
+		#alu h1, #ram-label {
+			font-size: 16px;
+			padding: 0;
+			margin: 0;
+			font-weight: bold;
+		}
+
+		#alu pre {
+			position: absolute;
+			top: 15px;
+			right: 5px;
+			text-align: right;
+		}
+
+		label {
+			font-size: 10px;
+		}
+
+		#label-ibus {
+			position: absolute;
+			top: 242px;
+			left: 8px;
+		}
+
+		#label-abus {
+			position: absolute;
+			top: 66px;
+			left: 38px;
+		}
+
+		#label-dbus {
+			position: absolute;
+			top: 431px;
+			left: 61px;
+		}
+
+		#ui {
+			padding: 5px;
+			position: absolute;
+			z-index: 999;
+		}
+	</style>
+</head>
+<body>
+	<span id="ram-label">RAM</span>
+	<div id="ram"></div>
+	<div id="rtl">
+		<label id="label-ibus">Internal Data Bus</label>
+		<label id="label-abus">Address Bus</label>
+		<label id="label-dbus">Data Bus</label>
+		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" id="graphics">
+			<defs>
+				<marker id="arrowend" markerWidth="3" markerHeight="3" refX="0" refY="1.5" orient="auto">
+					<polygon points="0 0, 3 1.5, 0 3" />
+				</marker>
+				<marker id="arrowstart" markerWidth="3" markerHeight="3" refX="3" refY="1.5" orient="auto">
+					<polygon points="3 0, 0 1.5, 3 3" />
+				</marker>
+			</defs>
+			<polyline id="ret_pc" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)"
+				points="146,140 265,140 265,178" 
+			/>
+			<polyline id="address_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="116,205 116,220" 
+			/>
+
+			<polyline id="ibus" stroke="black" fill="none" stroke-width="5"
+				points="80,230 600,230" 
+			/>
+			<polyline id="dbus" stroke="black" fill="none" stroke-width="5"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="20,420 600,420" 
+			/>
+			<polyline id="abus" stroke="black" fill="none" stroke-width="5"
+				marker-start="url(#arrowstart)"
+				points="20,55 116,55 116,132" 
+			/>
+
+			<polyline id="ret_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="265,210 265,220" 
+			/>
+			<polyline id="acu_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="440,210 440,220" 
+			/>
+			<polyline id="acu_alu" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="440,170 440,177" 
+			/>
+			<polyline id="alu_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)"
+				points="530,230 530,170" 
+			/>
+
+			<polyline id="m0_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="250,240 250,252" 
+			/>
+			<polyline id="m8_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="352,240 352,252" 
+			/>
+			<polyline id="m16_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="454,240 454,252" 
+			/>
+			<polyline id="m24_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="556,240 556,252" 
+			/>
+			<polyline id="m0_dbus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="250,400 250,410" 
+			/>
+			<polyline id="m8_dbus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="352,400 352,410" 
+			/>
+			<polyline id="m16_dbus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="454,400 454,410" 
+			/>
+			<polyline id="m24_dbus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="556,400 556,410" 
+			/>
+
+			<polyline id="stack_ibus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="110,240 110,252" 
+			/>
+			<polyline id="stack_dbus" stroke="black" fill="none" stroke-width="2"
+				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
+				points="110,368 110,410" 
+			/>
+		</svg>
+		<div id="alu">
+			<h1>ALU</h1>
+			<pre>
+				one/add:01
+				nil/sub:02
+				all/and:03
+				rsh/or:04
+				inv/xor:28
+			</pre>
+		</div>
+		<div id="address_decoding">
+			<div>pc:2f<span class="reg" id="pc">0x0000</span></div>
+			<div>*a:05<span class="reg pak" id="a_ptr">0x0000</span></div>
+			<div>*b:2c<span class="reg" id="b_ptr">0x0000</span></div>
+			<div>*m:33<span class="reg" id="m_ptr">0x0000</span></div>
+		</div>
+		<div id="ret-div">ret:32<span class="reg" id="ret">0x0000</span></div>
+		<div id="acu-div">acu:00<span class="reg pak" id="acu">0x0000</span></div>
+		<div id="data_access">
+			<div>a:- <span class="reg pak" id="a_minus">0x0000</span></div>
+			<div>a:06<span class="reg pak" id="a">0x0000</span></div>
+			<div>a:+ <span class="reg pak" id="a_plus">0x0000</span></div>
+			<div>b:- <span class="reg" id="b_minus">0x0000</span></div>
+			<div>b:2d<span class="reg" id="b">0x0000</span></div>
+			<div>b:+ <span class="reg" id="b_plus">0x0000</span></div>
+		</div>
+		<div id="memory_window">
+			<div class="col">
+				<div>m0 <span class="reg pak" id="m0">0x0000</span></div>
+				<div>m1 <span class="reg pak" id="m1">0x0000</span></div>
+				<div>m2 <span class="reg pak" id="m2">0x0000</span></div>
+				<div>m3 <span class="reg pak" id="m3">0x0000</span></div>
+				<div>m4 <span class="reg pak" id="m4">0x0000</span></div>
+				<div>m5 <span class="reg pak" id="m5">0x0000</span></div>
+				<div>m6 <span class="reg pak" id="m6">0x0000</span></div>
+				<div>m7 <span class="reg pak" id="m7">0x0000</span></div>
+			</div>
+
+			<div class="col">
+				<div>m8 <span class="reg" id="m8">0x0000</span></div>
+				<div>m9 <span class="reg" id="m9">0x0000</span></div>
+				<div>m10<span class="reg" id="m10">0x0000</span></div>
+				<div>m11<span class="reg" id="m11">0x0000</span></div>
+				<div>m12<span class="reg" id="m12">0x0000</span></div>
+				<div>m13<span class="reg" id="m13">0x0000</span></div>
+				<div>m14<span class="reg" id="m14">0x0000</span></div>
+				<div>m15<span class="reg" id="m15">0x0000</span></div>
+			</div>
+
+			<div class="col">
+				<div>m16<span class="reg" id="m16">0x0000</span></div>
+				<div>m17<span class="reg" id="m17">0x0000</span></div>
+				<div>m18<span class="reg" id="m18">0x0000</span></div>
+				<div>m19<span class="reg" id="m19">0x0000</span></div>
+				<div>m20<span class="reg" id="m20">0x0000</span></div>
+				<div>m21<span class="reg" id="m21">0x0000</span></div>
+				<div>m22<span class="reg" id="m22">0x0000</span></div>
+				<div>m23<span class="reg" id="m23">0x0000</span></div>
+			</div>
+
+			<div class="col">
+				<div>m24<span class="reg" id="m24">0x0000</span></div>
+				<div>m25<span class="reg" id="m25">0x0000</span></div>
+				<div>m26<span class="reg" id="m26">0x0000</span></div>
+				<div>m27<span class="reg" id="m27">0x0000</span></div>
+				<div>m28<span class="reg" id="m28">0x0000</span></div>
+				<div>m29<span class="reg" id="m29">0x0000</span></div>
+				<div>m30<span class="reg" id="m30">0x0000</span></div>
+				<div>m31<span class="reg" id="m31">0x0000</span></div>
+			</div>
+		</div>
+		<div id="ui">
+			<button id="step">Step [↓]</button>
+			<button id="run">Run [→]</button>
+			<button id="stop">Stop [space]</button>
+		</div>
+	</div>
+	<script src="./array-stride.js"></script>
+	<script src="../../lib/hex.js"></script>
+	<script src="./registers.js"></script>
+	<script src="./cpu.js"></script>
+	<script src="./asm.js"></script>
+	<script>
+		let eCache = {};
+
+		function get (id) {
+			if (!eCache[id]) {
+				eCache[id] = document.getElementById(id);
+			}
+			return eCache[id];
+		}
+
+		function formatCell (value) {
+			return `0x${value.toString(16).padStart(4,'0')}`;
+		}
+
+		function makeCell (index, value) {
+			let v = document.createElement('input');
+			v.id = `_${index}`;
+			v.className = 'cell';
+			v.value = formatCell(value);
+			v.onchange = (e) => {
+				let inst = e.target.value.match(/\S+/g);
+				let val;
+				if (inst.length == 1) {
+					val = parseInt(inst[0],16);
+					if (isNaN(val)) val = 0;
+				}
+				else if (inst.length == 2) {
+					val = asm(inst[0],inst[1]);
+				}
+				else if (inst.length == 3 && inst[0] == 'lit') {
+					val = asmlit(inst[1],inst[2]);
+				}
+				else if (inst.length == 4) {
+					val = asmpack(inst[0],inst[1],inst[2],inst[3]);
+				}
+				else {
+					val = 0;
+				}
+				e.target.value = formatCell(val);
+			}
+			let c = document.createElement('div');
+			c.innerHTML = `${index.toString(16).padStart(4,'0')}: `;
+			c.appendChild(v);
+			return c;
+		}
+
+		function setCell (index, value) {
+			get(`_${index}`).value = formatCell(value);
+		}
+
+		function getCell (index) {
+			return parseInt(get(`_${index}`).value, 16);
+		}
+
+		function showCell (index) {
+			let all = Array.from(document.getElementsByClassName('cell'));
+			all.forEach(x => x.style.backgroundColor = '');
+			let c = get(`_${index}`);
+			c.style.backgroundColor = 'yellow';
+			c.scrollIntoViewIfNeeded();
+		}
+
+		let ram = get('ram');
+
+		for (let i=0; i<=0x1ff; i++) {
+			ram.appendChild(makeCell(i, 0));
+		}
+
+		let runInterval;
+
+		function step () {
+			get('step').innerText = 'Step [↓]';
+			if (runInterval) {
+				clearInterval(runInterval);
+				runInterval = null;
+			}
+			exec();
+			updatePC();
+		}
+
+		function run () {
+			get('step').innerText = 'Pause [↓]';
+			if (!runInterval) {
+				runInterval = setInterval(() => {
+					for (let i=0; i<97; i++) {
+						exec()
+					}
+					updatePC();
+				},0);
+			}
+		}
+
+		function stop () {
+			get('step').innerText = 'Step [↓]';
+			if (runInterval) {
+				clearInterval(runInterval);
+				runInterval = null;
+			}
+			PC = 0;
+			updatePC();
+		}
+
+		get('step').onclick = step;
+		get('run').onclick =  run;
+		get('stop').onclick = stop;
+
+		document.body.onkeyup = (e) => {
+			switch (e.key) {
+				case ' ': stop(); break;
+				case 'ArrowRight': run(); break;
+				case 'ArrowDown': step(); break;
+			}
+		}
+
+		showCell(0);
+
+	</script>
+</body>
+</htm>
