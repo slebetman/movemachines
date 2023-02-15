@@ -144,6 +144,12 @@
 			position: absolute;
 			z-index: 999;
 		}
+
+		#mhz {
+			position: absolute;
+			left: 270px;
+			top: 60px;
+		}
 	</style>
 </head>
 <body>
@@ -318,6 +324,7 @@
 			<button id="run">Run [→]</button>
 			<button id="stop">Stop [space]</button>
 		</div>
+		<label id="mhz"></label>
 	</div>
 	<script src="./array-stride.js"></script>
 	<script src="../../lib/hex.js"></script>
@@ -405,11 +412,13 @@
 			updatePC();
 		}
 
+		let SPEEDUP = 14741;
+
 		function run () {
 			get('step').innerText = 'Pause [↓]';
 			if (!runInterval) {
 				runInterval = setInterval(() => {
-					for (let i=0; i<97; i++) {
+					for (let i=0; i<SPEEDUP; i++) {
 						exec()
 					}
 					updatePC();
@@ -440,6 +449,25 @@
 		}
 
 		showCell(0);
+
+		setInterval(() => {
+			if (runInterval) {
+				let hz = instCount;
+				let speedHz;
+				if (hz < 1000) {
+					speedHz = `${hz} Hz`;
+				} else if (hz < 1000000) {
+					speedHz = `${hz/1000} kHz`;
+				} else {
+					speedHz `${hz/1000000} MHz`;
+				}
+				get('mhz').innerText = speedHz;
+				instCount = 0;
+			}
+			else {
+				get('mhz').innerText = '';
+			}
+		}, 1000);
 
 	</script>
 </body>
