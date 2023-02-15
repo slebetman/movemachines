@@ -41,7 +41,7 @@
 		#data_access {
 			position: absolute;
 			top: 270px;
-			left: 50px;
+			left: 57px;
 		}
 
 		#memory_window {
@@ -235,11 +235,11 @@
 
 			<polyline id="stack_ibus" stroke="black" fill="none" stroke-width="2"
 				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
-				points="110,240 110,252" 
+				points="116,240 116,252" 
 			/>
 			<polyline id="stack_dbus" stroke="black" fill="none" stroke-width="2"
 				marker-end="url(#arrowend)" marker-start="url(#arrowstart)"
-				points="110,368 110,410" 
+				points="116,368 116,410" 
 			/>
 		</svg>
 		<div id="alu">
@@ -363,6 +363,7 @@
 					val = 0;
 				}
 				e.target.value = formatCell(val);
+				updateMem(index);
 			}
 			let c = document.createElement('div');
 			c.innerHTML = `${index.toString(16).padStart(4,'0')}: `;

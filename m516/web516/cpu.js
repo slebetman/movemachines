@@ -13,16 +13,18 @@ function MEM_READ (addr) {
 	return getCell(addr)
 }
 
-function MEM_WRITE (addr, val) {
-	setCell(addr,val);
-
+function updateMem (addr) {
 	if (
 		addr >= A_PTR-1 &&
 		addr <= A_PTR+1
 	) {
 		get('a').innerText = formatCell(getCell(A_PTR));
-		get('a_plus').innerText = formatCell(getCell(A_PTR+1));
-		get('a_minus').innerText = formatCell(getCell(A_PTR-1));
+		if (A_PTR+1 <= 0x1ff) {
+			get('a_plus').innerText = formatCell(getCell(A_PTR+1));
+		}
+		if (A_PTR-1 >= 0) {
+			get('a_minus').innerText = formatCell(getCell(A_PTR-1));
+		}
 	}
 
 	if (
@@ -30,8 +32,12 @@ function MEM_WRITE (addr, val) {
 		addr <= B_PTR+1
 	) {
 		get('b').innerText = formatCell(getCell(B_PTR));
-		get('b_plus').innerText = formatCell(getCell(B_PTR+1));
-		get('b_minus').innerText = formatCell(getCell(B_PTR-1));
+		if (B_PTR+1 <= 0x1ff) {
+			get('b_plus').innerText = formatCell(getCell(B_PTR+1));
+		}
+		if (B_PTR-1 >= 0) {
+			get('b_minus').innerText = formatCell(getCell(B_PTR-1));
+		}
 	}
 
 	if (
@@ -40,6 +46,11 @@ function MEM_WRITE (addr, val) {
 	) {
 		get(`m${addr-M_PTR}`).innerText = formatCell(getCell(addr));
 	}
+}
+
+function MEM_WRITE (addr, val) {
+	setCell(addr,val);
+	updateMem(addr);
 }
 
 var decode = (function(){
