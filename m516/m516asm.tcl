@@ -1,12 +1,19 @@
 #! /usr/bin/env tclsh
 
-package require adlib
+# package require adlib
 source mmacro.tcl
 
 # Set this to 0 to disable autopack:
 set enable_autopack 1
 
 array set specialregs {}
+
+proc shift {ls} {
+	upvar 1 $ls l
+	set ret [lindex $l 0]
+	set l [lrange $l 1 end]
+	return $ret
+}
 
 proc defineRegisters {w r regdef} {
 	upvar 1 $w wreg

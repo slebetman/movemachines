@@ -154,8 +154,7 @@ proc makeCDisplay {} {
 		375 90
 		375 160
 	} -arrow first
-	#label .c.acu -textvariable register(acu)
-	label .c.acu \
+	label .c.acu -textvariable register(acu) \
 		-bg white -font {Courier 8} -width 6 -relief sunken
 	.c create window {310 135} -window .c.acu -anchor sw
 	.c create text {308 130} -text "acu:00" -anchor se \
@@ -178,8 +177,7 @@ proc makeCDisplay {} {
 	# address control #######
 	set yy 114
 	foreach {x y} {*m 33 *b 2c *a 05 pc 2f} {
-		#label .c.$x -textvariable register($x)
-		label .c.$x \
+		label .c.$x -textvariable register($x) \
 			-bg white -font {Courier 8} -width 6 -relief sunken
 		.c create window 96 $yy -window .c.$x -anchor sw
 		.c create text 94 [expr {$yy-5}] -text "$x:$y" -anchor se \
@@ -191,8 +189,7 @@ proc makeCDisplay {} {
 		120 160
 	} -arrow both
 	incr yy 84
-	#label .c.ret -textvariable register(ret)
-	label .c.ret \
+	label .c.ret -textvariable register(ret) \
 		-bg white -font {Courier 8} -width 6 -relief sunken
 	.c create window 200 $yy -window .c.ret -anchor sw
 	.c create text 198 [expr {$yy-5}] -text "ret:32" -anchor se \
@@ -210,8 +207,7 @@ proc makeCDisplay {} {
 	# data ##################
 	set yy 185
 	foreach {x y} {+a {+ } a 06 -a {- } +b {+ } b 25 -b {- }} {
-		#label .c.$x -textvariable register($x)
-		label .c.$x \
+		label .c.$x -textvariable register($x) \
 			-bg white -font {Courier 8} -width 6 -relief sunken
 		.c create window 95 $yy -window .c.$x -anchor nw
 		.c create text 93 [expr {$yy+5}] -text "[string trim $x +-]:$y" \
@@ -237,8 +233,7 @@ proc makeCDisplay {} {
 		
 	for {set y 0} {$y < 8} {incr y} {
 			set reg m[expr {$y+$range}]
-		#label .c.$reg -textvariable register($reg) -bg white
-		label .c.$reg \
+		label .c.$reg -textvariable register($reg) -bg white \
 			-padx 0 -pady 0 -width 6 -font {Courier 8} -relief sunken
 		.c create window $xx $yy -window .c.$reg -anchor nw
 		.c create text [expr {$xx-3}] [expr {$yy+5}] \
@@ -257,8 +252,7 @@ proc makeCDisplay {} {
 		incr xx 76
 	}
 	
-	#label .c.instruction -textvariable instruction
-	label .c.instruction \
+	label .c.instruction -textvariable instruction \
 		-font {Courier 8} -width 20
 	.c create window 130 0 -window .c.instruction -anchor nw
 	
@@ -825,9 +819,9 @@ proc stopSim {} {
 		foreach x [array names register] {
 			set register($x) 0x0000
 		}
-		#.f.f.l selection clear 0 end
-		#.f.f.l selection set $register(pc)
-		#.f.f.l see $register(pc)
+		.f.f.l selection clear 0 end
+		.f.f.l selection set $register(pc)
+		.f.f.l see $register(pc)
 		printAsm
 		update
 	}
@@ -849,10 +843,10 @@ proc stepSim {} {
 }
 
 proc showInst {} {
-	#global register
-	#.f.f.l selection clear 0 end
-	#.f.f.l selection set $register(pc)
-	#.f.f.l see $register(pc)
+	global register
+	.f.f.l selection clear 0 end
+	.f.f.l selection set $register(pc)
+	.f.f.l see $register(pc)
 }
 
 proc defineRegisters {w r regdef} {
@@ -1025,8 +1019,8 @@ proc simUpdate {{unroll 0}} [string map {%EXEC% {
 		# cycle. This significantly speeds up simulation but increases the
 		# granularity of event processing.
 		if {$unroll == 0} {
-			for {set N 0} {$N < 511 && $sim} {incr N} {
-				#simUpdate 1
+			for {set N 0} {$N < 40 && $sim} {incr N} {
+				simUpdate 1
 				%EXEC%		
 			}
 			after 1 simUpdate
@@ -1069,7 +1063,7 @@ proc processAttachRamDevice {name params values} {
 			set do_dialog 1
 			pack [frame $t.$n] -fill x
 			pack [label $t.$n.l -text $txt] -side left
-			pack [entry $t.$n.e -width 9] -side right ;#-textvariable ramDevice($n)] -side right
+			pack [entry $t.$n.e -width 9] -side right -textvariable ramDevice($n)] -side right
 		} else {
 			set ramDevice($n) $v
 		}

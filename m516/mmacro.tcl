@@ -1,4 +1,16 @@
-package require fileparse
+# package require fileparse
+
+proc eachline {var filename body} {
+	upvar 1 $var v
+	set f [open $filename]
+	set txt [read $f]
+	close $f
+	
+	foreach l [split $txt "\n"] {
+		set v $l
+		uplevel 1 $body
+	}
+}
 
 namespace eval mmacro {
 	proc init {} {
