@@ -10,7 +10,12 @@ var CARRY = 0;
 var reg = new Registers(0x7f);
 
 function MEM_READ (addr) {
-	return getCell(addr)
+	if (addr <= 0x1ff) {
+		return getCell(addr);
+	}
+	else {
+		return 0;
+	}
 }
 
 function updateMem (addr) {
@@ -49,8 +54,10 @@ function updateMem (addr) {
 }
 
 function MEM_WRITE (addr, val) {
-	setCell(addr,val);
-	updateMem(addr);
+	if (addr <= 0x1ff) {
+		setCell(addr,val);
+		updateMem(addr);
+	}
 }
 
 var decode = (function(){
@@ -165,14 +172,14 @@ R(0x2a,'high',function(){
 });
 W(0x2a,'high',function(v){
 	var mval = MEM_READ(A_PTR) & 0x00ff;
-	MEM_READ(A_PTR) = mval | ((v << 8) & 0xff00);
+	MEM_WRITE(A_PTR, mval | ((v << 8) & 0xff00));
 });
 R(0x2b,'low',function(){
 	return MEM_READ(A_PTR) & 0x00ff;
 });
 W(0x2b,'low',function(v){
 	var mval = MEM_READ(A_PTR) & 0xff00;
-	MEM_READ(A_PTR) = mval | (v & 0x00ff);
+	MEM_WRITE(A_PTR, mval | (v & 0x00ff));
 });
 R(0x2d,'b',function(){return MEM_READ(B_PTR)});
 W(0x2d,'b',function(v){MEM_WRITE(B_PTR,v)});
