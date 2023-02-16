@@ -1,0 +1,163 @@
+* {
+	font-family: monospace;
+}
+
+#load-ram {
+	display: none;
+}
+
+#load-ram-label {
+	border: 1px solid #777;
+	border-radius: 2px 2px;
+	font-size: 12px;
+	padding: 2px 5px;
+	margin: 0;
+	position: relative;
+	top: -3px;
+}
+
+#ram {
+	position: absolute;
+	width: 120px;
+	border-right: 1px solid black;
+	background-color: white;
+	height: calc(100vh - 30px);
+	overflow-y: scroll;
+	top: 30px;
+	left: 0;
+}
+
+#ram input {
+	width: 4em;
+	padding: 0;
+	margin: 0;
+	border: none;
+}
+
+#rtl {
+	width: calc(100vw - 120px);
+	height: 100vh;
+	top:0;
+	left: 120px;
+	background-color: lightgray;
+	position: absolute;
+}
+
+#address_decoding {
+	position: absolute;
+	top: 140px;
+	left: 50px;
+}
+
+#data_access {
+	position: absolute;
+	top: 270px;
+	left: 57px;
+}
+
+#memory_window {
+	position: absolute;
+	top: 270px;
+	left: 200px;
+}
+
+span.reg {
+	width: 4.5em;
+	border: 1px solid #777;
+	display: inline-block;
+	height: 1em;
+	margin: 0;
+	padding: 0;
+	margin-left: 5px;
+	text-align: center;
+	color: #333;
+	background-color: white;
+}
+
+span.pak {
+	background-color: #ff9;
+}
+
+div.col {
+	float: left;
+	margin-right: 12px;
+}
+
+div#ret-div {
+	position: absolute;
+	top: 194px;
+	left: 190px;
+}
+
+div#acu-div {
+	position: absolute;
+	top: 194px;
+	left: 365px;
+}
+
+#graphics {
+	position: absolute;
+	width: 1000px;
+	height: 700px;
+	top:8px;
+	left: 8px;
+}
+
+#alu {
+	background-color: white;
+	position: absolute;
+	width: 150px;
+	height: 100px;
+	top: 55px;
+	left: 415px;
+	padding: 5px;
+	border: 1px solid #777;
+}
+
+#alu h1, #ram-label {
+	font-size: 16px;
+	padding: 0;
+	margin: 0;
+	font-weight: bold;
+}
+
+#alu pre {
+	position: absolute;
+	top: 15px;
+	right: 5px;
+	text-align: right;
+}
+
+label {
+	font-size: 10px;
+}
+
+#label-ibus {
+	position: absolute;
+	top: 242px;
+	left: 8px;
+}
+
+#label-abus {
+	position: absolute;
+	top: 66px;
+	left: 38px;
+}
+
+#label-dbus {
+	position: absolute;
+	top: 431px;
+	left: 61px;
+}
+
+#ui {
+	padding: 5px;
+	position: absolute;
+	z-index: 999;
+}
+
+#mhz {
+	position: absolute;
+	left: 270px;
+	top: 60px;
+}
