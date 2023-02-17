@@ -156,8 +156,14 @@ label {
 	z-index: 999;
 }
 
-#mhz {
+#mhz, #disassembly {
 	position: absolute;
-	left: 270px;
+	left: 180px;
+	top: 80px;
+	width: 200px;
+	text-align: center;
+}
+
+#disassembly {
 	top: 60px;
 }

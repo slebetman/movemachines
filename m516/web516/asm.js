@@ -24,3 +24,33 @@ function asmlit (dst,val) {
 	
 	return 0x4000 | (dst<<12) | val;
 }
+
+// this[i].name.read
+// this[i].name.write
+
+function disassemble (val) {
+	let packed = val & 0x8000;
+	let lit = val & 0x4000;
+	let dst, src, dst2, src2;
+
+	if (packed) {
+		dst = reg[(val & 0x7000) >> 12].name.write;
+		src = reg[(val & 0x0f00) >> 8].name.read;
+		dst2 = reg[(val & 0x00f0) >> 4].name.write;
+		src2 = reg[val & 0x000f].name.read;
+
+		return `${dst} ${src} ${dst2} ${src2}`;
+	}
+	else {
+		if (lit) {
+			dst = reg[(val & 0x3000) >> 12].name.write;
+			src = val & 0x0fff;
+			return `${dst} lit ${src}`;
+		}
+		else {
+			dst = reg[(val & 0x3f80) >> 7].name.write;
+			src = reg[val & 0x007f].name.read;
+			return `${dst} ${src}`;
+		}
+	}
+}

@@ -265,6 +265,11 @@ reg.onchange = (addr, name, val) => {
 function updatePC () {
 	showCell(PC);
 	get('pc').innerText = formatCell(PC);
+	let inst = disassemble(MEM_READ(PC));
+	if (inst.match(/ lit$/)) {
+		inst += ' ' + MEM_READ(PC+1);
+	}
+	get('disassembly').innerText = inst;
 }
 
 function exec () {

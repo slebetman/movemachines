@@ -123,6 +123,6 @@ setInterval(() => {
 		instCount = 0;
 	}
 	else {
-		get('mhz').innerText = '';
+		get('mhz').innerText = '0.00 Hz';
 	}
 }, 1000);
