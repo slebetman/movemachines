@@ -174,6 +174,7 @@ R(0x06,'a',function(){return MEM_READ(A_PTR)});
 W(0x06,'a',function(v){MEM_WRITE(A_PTR,v)});
 R(0x07,'a-',function(){
 	A_PTR--;
+	reg[reg.address['*a']].write(A_PTR);
 	updateMem(A_PTR);
 	updateMem(A_PTR-1);
 	updateMem(A_PTR+1);
@@ -187,6 +188,7 @@ W(0x07,'+a',function(v){
 });
 R(0x29,'a+',function(){
 	A_PTR++;
+	reg[reg.address['*a']].write(A_PTR);
 	updateMem(A_PTR);
 	updateMem(A_PTR-1);
 	updateMem(A_PTR+1);
@@ -216,6 +218,7 @@ R(0x2d,'b',function(){return MEM_READ(B_PTR)});
 W(0x2d,'b',function(v){MEM_WRITE(B_PTR,v)});
 R(0x2e,'b-',function(){
 	B_PTR--;
+	reg[reg.address['*b']].write(B_PTR);
 	updateMem(B_PTR-1);
 	updateMem(B_PTR+1);
 	return MEM_READ(B_PTR+1);
@@ -317,6 +320,7 @@ function updatePC () {
 	for (let i in memUpdates) {
 		runUpdateMem(memUpdates[i]);
 	}
+	console.log(regUpdates);
 	for (let n in regUpdates) {
 		runUpdateRegisters(n);
 	}
