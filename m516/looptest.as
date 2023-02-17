@@ -24,4 +24,5 @@ autopack
 
 	acu m3
 	add one
+	m3 acu
 goto LOOP
