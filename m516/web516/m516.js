@@ -13,8 +13,8 @@ function makeCell (index, value) {
 		else if (inst.length == 2) {
 			val = asm(inst[0],inst[1]);
 		}
-		else if (inst.length == 3 && inst[0] == 'lit') {
-			val = asmlit(inst[1],inst[2]);
+		else if (inst.length == 3 && inst[1] == 'lit') {
+			val = asmlit(inst[0],inst[2]);
 		}
 		else if (inst.length == 4) {
 			val = asmpack(inst[0],inst[1],inst[2],inst[3]);
