@@ -2,6 +2,10 @@ include 516inc.as
 autopack
 
 *m lit 0x20
+m0 nil
+m1 nil
+m2 nil
+m3 nil
 
 :LOOP
 	acu m0
