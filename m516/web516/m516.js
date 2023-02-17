@@ -32,11 +32,18 @@ function makeCell (index, value) {
 }
 
 function setCell (index, value) {
-	get(`_${index}`).value = formatCell(value);
+	let cell = get(`_${index}`);
+	if (cell) {
+		cell.value = formatCell(value);
+	}
 }
 
 function getCell (index) {
-	return parseInt(get(`_${index}`).value, 16);
+	let cell = get(`_${index}`);
+	if (cell) {
+		return parseInt(cell.value, 16);
+	}
+	return 0;
 }
 
 function showCell (index) {

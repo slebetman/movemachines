@@ -25,9 +25,6 @@ function asmlit (dst,val) {
 	return 0x4000 | (dst<<12) | val;
 }
 
-// this[i].name.read
-// this[i].name.write
-
 function disassemble (val) {
 	let packed = val & 0x8000;
 	let lit = val & 0x4000;
@@ -45,7 +42,7 @@ function disassemble (val) {
 		if (lit) {
 			dst = reg[(val & 0x3000) >> 12].name.write;
 			src = val & 0x0fff;
-			return `${dst} lit ${src}`;
+			return `${dst} lit ${formatCell(src)}`;
 		}
 		else {
 			dst = reg[(val & 0x3f80) >> 7].name.write;

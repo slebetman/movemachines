@@ -18,7 +18,13 @@ function MEM_READ (addr) {
 	}
 }
 
+let memUpdates = {};
+
 function updateMem (addr) {
+	memUpdates[addr] = addr;
+}
+
+function runUpdateMem (addr) {
 	if (
 		addr >= A_PTR-1 &&
 		addr <= A_PTR+1
@@ -134,12 +140,22 @@ R(0x04,'rsh',function(){return ACU >> 1});
 W(0x04,'or',function(v){ACU |= v});
 // plainRegister(0x05,'*a');
 R(0x05,'*a',function(){return A_PTR});
-W(0x05,'*a',function(v){A_PTR = v});
+W(0x05,'*a',function(v){
+	A_PTR = v;
+	updateMem(A_PTR);
+	updateMem(A_PTR-1);
+	updateMem(A_PTR+1);
+});
 R(0x28,'inv',function(){return ACU ^ 0xffff});
 W(0x28,'xor',function(v){ACU ^= v});
 // plainRegister(0x2c,'*b');
 R(0x2c,'*b',function(){return B_PTR});
-W(0x2c,'*b',function(v){B_PTR = v});
+W(0x2c,'*b',function(v){
+	B_PTR = v;
+	updateMem(B_PTR);
+	updateMem(B_PTR-1);
+	updateMem(B_PTR+1);
+});
 // plainRegister(0x2f,'pc');
 R(0x2f,'pc',function(){return PC});
 W(0x2f,'pc',function(v){RET = PC; PC = v});
@@ -148,24 +164,39 @@ R(0x32,'ret',function(){return RET});
 W(0x32,'ret',function(v){RET = v});
 //plainRegister(0x33,'*m');
 R(0x33,'*m',function(){return M_PTR});
-W(0x33,'*m',function(v){M_PTR = v & 0xffe0});
+W(0x33,'*m',function(v){
+	M_PTR = v & 0xffe0;
+	for (let i=0;i<32;i++) {
+		updateMem(M_PTR+i);
+	}
+});
 R(0x06,'a',function(){return MEM_READ(A_PTR)});
 W(0x06,'a',function(v){MEM_WRITE(A_PTR,v)});
 R(0x07,'a-',function(){
 	A_PTR--;
+	updateMem(A_PTR);
+	updateMem(A_PTR-1);
+	updateMem(A_PTR+1);
 	return MEM_READ(A_PTR+1);
 });
 W(0x07,'+a',function(v){
 	A_PTR++;
 	MEM_WRITE(A_PTR,v);
+	updateMem(A_PTR-1);
+	updateMem(A_PTR+1);
 });
 R(0x29,'a+',function(){
 	A_PTR++;
+	updateMem(A_PTR);
+	updateMem(A_PTR-1);
+	updateMem(A_PTR+1);
 	return MEM_READ(A_PTR-1);
 });
 W(0x29,'-a',function(v){
 	A_PTR--;
 	MEM_WRITE(A_PTR,v);
+	updateMem(A_PTR-1);
+	updateMem(A_PTR+1);
 });
 R(0x2a,'high',function(){
 	return (MEM_READ(A_PTR) >> 8) & 0x00ff;
@@ -185,11 +216,15 @@ R(0x2d,'b',function(){return MEM_READ(B_PTR)});
 W(0x2d,'b',function(v){MEM_WRITE(B_PTR,v)});
 R(0x2e,'b-',function(){
 	B_PTR--;
+	updateMem(B_PTR-1);
+	updateMem(B_PTR+1);
 	return MEM_READ(B_PTR+1);
 });
 W(0x2e,'+b',function(v){
 	B_PTR++;
 	MEM_WRITE(B_PTR,v);
+	updateMem(B_PTR-1);
+	updateMem(B_PTR+1);
 });
 W(0x30,'pcz',function(v){
 	if (ACU == 0) {
@@ -220,7 +255,9 @@ for (var i=0x08,m=0;i<=0x27;i++,m++) {
 	}(m));
 }
 
-reg.onchange = (addr, name, val) => {
+let regUpdates = {};
+
+function runUpdateRegisters (name) {
 	switch (name) {
 		case 'acu':
 		case 'add':
@@ -236,11 +273,14 @@ reg.onchange = (addr, name, val) => {
 		case '*a':
 		case '+a':
 		case '-a':
+		case 'a+':
+		case 'a-':
 			get('a_ptr').innerText = formatCell(A_PTR);
 			break;
 
 		case '*b':
 		case '+b':
+		case 'b-':
 			get('b_ptr').innerText = formatCell(B_PTR);
 			break;
 
@@ -262,14 +302,26 @@ reg.onchange = (addr, name, val) => {
 	}
 }
 
+reg.onchange = (addr, name, val) => {
+	regUpdates[name] = true;
+}
+
 function updatePC () {
 	showCell(PC);
 	get('pc').innerText = formatCell(PC);
 	let inst = disassemble(MEM_READ(PC));
 	if (inst.match(/ lit$/)) {
-		inst += ' ' + MEM_READ(PC+1);
+		inst += ' ' + formatCell(MEM_READ(PC+1));
 	}
 	get('disassembly').innerText = inst;
+	for (let i in memUpdates) {
+		runUpdateMem(memUpdates[i]);
+	}
+	for (let n in regUpdates) {
+		runUpdateRegisters(n);
+	}
+	regUpdates = {};
+	memUpdates = {};
 }
 
 function exec () {
