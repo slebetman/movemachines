@@ -148,9 +148,9 @@ setInterval(() => {
 		if (hz < 1000) {
 			speedHz = `${hz} Hz`;
 		} else if (hz < 1000000) {
-			speedHz = `${hz/1000} kHz`;
+			speedHz = `${(hz/1000).toFixed(3)} kHz`;
 		} else {
-			speedHz = `${hz/1000000} MHz`;
+			speedHz = `${(hz/1000000).toFixed(3)} MHz`;
 		}
 		get('mhz').innerText = speedHz;
 		instCount = 0;
