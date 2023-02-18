@@ -61,6 +61,8 @@ function popupDialog (title, width, height, content) {
 			clientY: e.clientY,
 		}
 
+		document.body.appendChild(main);
+
 		window.onpointerup = () => {
 			window.onpointermove = undefined;
 			window.onpointerup = undefined;
@@ -80,11 +82,21 @@ function popupDialog (title, width, height, content) {
 		}
 	}
 
-	closeBtn.onclick = () => {
-		document.body.removeChild(main);
-		if (main.onunload) {
-			main.onunload();
+	main.close = () => {
+		console.log('close!');
+		if (main.isConnected) {
+			document.body.removeChild(main);
+			if (main.onunload) {
+				main.onunload();
+			}
 		}
+	}
+
+	closeBtn.onpointerdown = (e) => {
+		main.close();
+
+		e.stopPropagation();
+		e.preventDefault();
 	}
 
 	main.appendChild(titleBar);

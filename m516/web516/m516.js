@@ -131,6 +131,8 @@ get('step').onclick = step;
 get('run').onclick =  run;
 get('stop').onclick = stop;
 
+get('device-manager-btn').onclick = () => deviceManager();
+
 document.body.onkeyup = (e) => {
 	switch (e.key) {
 		case ' ': stop(); break;

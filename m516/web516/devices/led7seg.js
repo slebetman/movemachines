@@ -80,7 +80,7 @@ function LED7draw (id) {
 function led7seg (addr) {
 	let interface = {}
 
-	toolWindow('7 Segment LED', 210, 95, `
+	toolWindow('7 Segment Display', 210, 95, `
 		<style>
 			svg.led7seg path.segment {
 				fill:none;
@@ -140,9 +140,13 @@ function led7seg (addr) {
 		w.cleanup = () => {
 			for (let i=0; i<4; i++) {
 				removeMemDevice(addr+i);
-			}	
+			}
+			if (interface.cleanup) {
+				interface.cleanup();
+			}
 		}
 
+		interface.close = w.close;
 		interface.write = led7write;
 	})
 
