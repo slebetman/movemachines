@@ -27,7 +27,6 @@ function popupDialog (title, width, height, content) {
 	let windowHeight = document.body.offsetHeight;
 	let x = Math.floor(windowWidth/2 - width/2);
 	let y = Math.floor(windowHeight/2 - height/2);
-	let origin = null;
 
 	let main = make('div', {
 		className: 'dialog',
@@ -45,7 +44,7 @@ function popupDialog (title, width, height, content) {
 	let closeBtn = make('btn', {
 		className: 'dialog-close',
 	})
-	closeBtn.innerText = 'x';
+	closeBtn.innerText = '×';
 	titleBar.appendChild(closeBtn);
 	let container = make('div', {
 		className: 'dialog-container',
@@ -55,28 +54,29 @@ function popupDialog (title, width, height, content) {
 	}
 
 	titleBar.onpointerdown = (e) => {
-		origin = {
+		let origin = {
 			x: x,
 			y: y,
 			clientX: e.clientX,
 			clientY: e.clientY,
 		}
-	}
 
-	window.onpointerup = () => {
-		origin = null;
-	}
+		window.onpointerup = () => {
+			window.onpointermove = undefined;
+			window.onpointerup = undefined;
+		}
 
-	window.onpointermove = (e) => {
-		if (origin) {
-			y = origin.y + e.clientY - origin.clientY;
-			x = origin.x + e.clientX - origin.clientX;
+		window.onpointermove = (e) => {
+			if (origin) {
+				y = origin.y + e.clientY - origin.clientY;
+				x = origin.x + e.clientX - origin.clientX;
 
-			main.style.top = `${y}px`;
-			main.style.left = `${x}px`;
+				main.style.top = `${y}px`;
+				main.style.left = `${x}px`;
 
-			e.stopPropagation();
-			e.preventDefault();
+				e.stopPropagation();
+				e.preventDefault();
+			}
 		}
 	}
 
