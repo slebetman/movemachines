@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="34.000008"
+   height="64"
+   viewBox="0 0 34.000008 64.000001"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.2.2 (1:1.2.2+202212051552+b0a8486541)"
+   sodipodi:docname="7seg.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:zoom="1"
+     inkscape:cx="16.5"
+     inkscape:cy="46"
+     inkscape:window-width="1920"
+     inkscape:window-height="997"
+     inkscape:window-x="1920"
+     inkscape:window-y="25"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs2" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-0.26450002,-0.26450002)">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="M 8.2645,3.2645 H 26.298174"
+       id="segment-0" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="m 31.2645,26.2645 v -18"
+       id="segment-2" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="m 3.2645,26.2645 v -18"
+       id="segment-1" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="m 31.2645,56.2645 v -18"
+       id="segment-5" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="m 3.2645,56.2645 v -18"
+       id="segment-4" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="M 8.2645,32.264499 H 26.399955"
+       id="segment-3" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="M 8.2645,61.264501 H 26.399955"
+       id="segment-6" />
+  </g>
+</svg>

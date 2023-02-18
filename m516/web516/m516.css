@@ -167,3 +167,8 @@ label {
 #disassembly {
 	top: 60px;
 }
+
+polyline {
+	stroke: black;
+	fill: none;
+}

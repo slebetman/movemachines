@@ -9,15 +9,6 @@ var CARRY = 0;
 
 var reg = new Registers(0x7f);
 
-function MEM_READ (addr) {
-	if (addr <= 0x1ff) {
-		return getCell(addr);
-	}
-	else {
-		return 0;
-	}
-}
-
 let memUpdates = {};
 
 function updateMem (addr) {
@@ -59,10 +50,39 @@ function runUpdateMem (addr) {
 	}
 }
 
+let memDevices = {}
+
+function attachMemDevice (addr, read, write, update) {
+	memDevices[addr] = {
+		read,
+		write,
+		update,
+	}
+}
+
+function removeMemDevice (addr) {
+	delete memDevices[addr];
+}
+
 function MEM_WRITE (addr, val) {
 	if (addr <= 0x1ff) {
 		setCell(addr,val);
 		updateMem(addr);
+	}
+	else if (memDevices[addr] && memDevices[addr].write) {
+		memDevices[addr].write(val);
+	}
+}
+
+function MEM_READ (addr) {
+	if (addr <= 0x1ff) {
+		return getCell(addr);
+	}
+	else if (memDevices[addr] && memDevices[addr].read) {
+		return memDevices[addr].read();
+	}
+	else {
+		return 0;
 	}
 }
 
@@ -128,10 +148,10 @@ W(0x01,'add',function(v){
 W(0x02,'sub',function(v){
 	ACU -= v;
 	if (ACU < 0) {
-		CARRY = 0;
+		CARRY = 1;
 	}
 	else {
-		CARRY = 1;
+		CARRY = 0;
 	}
 	ACU &= 0xffff;
 });
@@ -320,12 +340,17 @@ function updatePC () {
 	for (let i in memUpdates) {
 		runUpdateMem(memUpdates[i]);
 	}
-	console.log(regUpdates);
 	for (let n in regUpdates) {
 		runUpdateRegisters(n);
 	}
 	regUpdates = {};
 	memUpdates = {};
+	for (let i in memDevices) {
+		let dev = memDevices[i];
+		if (dev.update) {
+			dev.update();
+		}
+	}
 }
 
 function exec () {
