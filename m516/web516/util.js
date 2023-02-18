@@ -5,7 +5,15 @@ function make (type, prop) {
 
     if (prop) {
         for (let p in prop) {
-            e[p] = prop[p];
+            if (p === 'style') {
+                let propStyle = prop[p];
+                for (let s in propStyle) {
+                    e.style[s] = propStyle[s];
+                }
+            }
+            else {
+                e[p] = prop[p];
+            }
         }
     }
 

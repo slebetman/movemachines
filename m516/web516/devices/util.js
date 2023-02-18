@@ -1,38 +1,8 @@
-function popupWindow (title, width, height, content) {
-	let w = window.open('',title,`toolbar=no,location=no,menubar=no,status=no,width=${width},height=${height}`);
-	let elementCache = {};
-
-	w.get = (id) => {
-		if (!elementCache[id]) {
-			elementCache[id] = w.document.getElementById(id);
-		}
-		return elementCache[id];
-	}
-
-	w.make = (type, prop) => {
-		let e = w.document.createElement(type);
-	
-		if (prop) {
-			for (let p in prop) {
-				e[p] = prop[p];
-			}
-		}
-	
-		return e;
-	}
-
-	if (content) {
-		w.document.body.innerHTML = content;
-	}
-
-	return w;
-}
-
 let toolWindows = {}
 
 function toolWindow (title, width, height, content, init) {
 	if (!toolWindows[title]) {
-		let w = popupWindow(title, width, height, content);
+		let w = popupDialog(title, width, height, content);
 
 		if (init) {
 			init(w);
@@ -43,6 +13,7 @@ function toolWindow (title, width, height, content, init) {
 				w.cleanup();
 			}
 			delete toolWindows[title];
+			eCache = {}
 		}
 
 		toolWindows[title] = w;
@@ -51,3 +22,75 @@ function toolWindow (title, width, height, content, init) {
 	return toolWindows[title];
 }
 
+function popupDialog (title, width, height, content) {
+	let windowWidth = document.body.offsetWidth;
+	let windowHeight = document.body.offsetHeight;
+	let x = Math.floor(windowWidth/2 - width/2);
+	let y = Math.floor(windowHeight/2 - height/2);
+	let origin = null;
+
+	let main = make('div', {
+		className: 'dialog',
+		style: {
+			width: `${width}px`,
+			height: `${height + 18}px`,
+			top: `${y}px`,
+			left: `${x}px`,
+		}
+	});
+	let titleBar = make('div', {
+		className: 'dialog-title',
+	})
+	titleBar.innerHTML = title;
+	let closeBtn = make('btn', {
+		className: 'dialog-close',
+	})
+	closeBtn.innerText = 'x';
+	titleBar.appendChild(closeBtn);
+	let container = make('div', {
+		className: 'dialog-container',
+	})
+	if (content) {
+		container.innerHTML = content;
+	}
+
+	titleBar.onpointerdown = (e) => {
+		origin = {
+			x: x,
+			y: y,
+			clientX: e.clientX,
+			clientY: e.clientY,
+		}
+	}
+
+	window.onpointerup = () => {
+		origin = null;
+	}
+
+	window.onpointermove = (e) => {
+		if (origin) {
+			y = origin.y + e.clientY - origin.clientY;
+			x = origin.x + e.clientX - origin.clientX;
+
+			main.style.top = `${y}px`;
+			main.style.left = `${x}px`;
+
+			e.stopPropagation();
+			e.preventDefault();
+		}
+	}
+
+	closeBtn.onclick = () => {
+		document.body.removeChild(main);
+		if (main.onunload) {
+			main.onunload();
+		}
+	}
+
+	main.appendChild(titleBar);
+	main.appendChild(container);
+
+	document.body.appendChild(main);
+
+	return main;
+}

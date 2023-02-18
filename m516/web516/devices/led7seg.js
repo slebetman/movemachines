@@ -80,7 +80,7 @@ function LED7draw (id) {
 function led7seg (addr) {
 	let interface = {}
 
-	toolWindow('7 Segment LED', 210, 90, `
+	toolWindow('7 Segment LED', 210, 95, `
 		<style>
 			svg.led7seg path.segment {
 				fill:none;
@@ -105,7 +105,7 @@ function led7seg (addr) {
 	(w) => {
 		function led7write (id, val) {
 			for (let i=0; i<7; i++) {
-				let s = w.get(`led7seg-${id}-${i}`);
+				let s = get(`led7seg-${id}-${i}`);
 				
 				if (val & (1 << i)) {
 					s.style.stroke = led7ON;
