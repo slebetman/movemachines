@@ -33,7 +33,7 @@
 // 	F	0x1b
 // -----------------------------------------------
 
-let led7seg = (() => {
+let led7seg16bit = (() => {
 	let led7ON = '#000';
 	let led7OFF = '#ddd';
 
@@ -84,10 +84,8 @@ let led7seg = (() => {
 		// Stop if something else is already installed!
 		if (memDevices[addr]) return;
 		if (memDevices[addr+1]) return;
-		if (memDevices[addr+2]) return;
-		if (memDevices[addr+3]) return;
 
-		toolWindow('7 Segment Display', 'fit-content', 'fit-content', `
+		toolWindow('16bit 7 Seg. Display', 'fit-content', 'fit-content', `
 			<style>
 				svg.led7seg path.segment {
 					fill:none;
@@ -126,8 +124,8 @@ let led7seg = (() => {
 			let cache = [0,0,0,0];
 			let updated = [false, false, false, false];
 			
-			for (let i=0; i<4; i++) {
-				attachMemDevice(addr+i,
+			for (let i=0; i<4; i+=2) {
+				attachMemDevice(addr + i/2,
 					() => {
 						return cache[i];
 					},
@@ -139,7 +137,8 @@ let led7seg = (() => {
 					},
 					() => {
 						if (updated[i]) {
-							led7write(i, cache[i]);
+							led7write(i, cache[i] & 0x00ff);
+							led7write(i+1, (cache[i] & 0xff00) >> 8);
 							updated[i] = false;
 						}
 					}
@@ -147,7 +146,7 @@ let led7seg = (() => {
 			}
 
 			w.cleanup = () => {
-				for (let i=0; i<4; i++) {
+				for (let i=0; i<2; i++) {
 					removeMemDevice(addr+i);
 				}
 				if (interface.cleanup) {

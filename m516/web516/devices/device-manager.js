@@ -4,7 +4,12 @@ let deviceManager =(() => {
 			init: () => led7seg(0x0200),
 			enabled: false,
 			device: null,
-		}
+		},
+		'7 Segment Display (16 bit)': {
+			init: () => led7seg16bit(0x0200),
+			enabled: false,
+			device: null,
+		},
 	}
 
 	function listDevice (title, prop) {
@@ -28,11 +33,14 @@ let deviceManager =(() => {
 					close();
 				}
 				else {
-					prop.device = prop.init();
-					prop.device.cleanup = close;
-					prop.enabled = true;
-					prop.btn.innerText = 'Disable';
-					prop.btn.className = 'on';
+					let dev = prop.init();
+					if (dev) {
+						prop.device = dev;
+						prop.device.cleanup = close;
+						prop.enabled = true;
+						prop.btn.innerText = 'Disable';
+						prop.btn.className = 'on';
+					}
 				}
 			}
 		});
@@ -49,6 +57,10 @@ let deviceManager =(() => {
 			<style>
 				#device-manager {
 					overflow: auto;
+				}
+				#device-manager .device-list {
+					width: 100%;
+					height: 2em;
 				}
 				#device-manager .device-list button {
 					float: right;
