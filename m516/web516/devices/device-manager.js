@@ -45,7 +45,7 @@ let deviceManager =(() => {
 	return function () {
 		let interface = {};
 
-		toolWindow('Device Manager', 350, 150, `
+		toolWindow('Device Manager', 350, 80, `
 			<style>
 				#device-manager {
 					overflow: auto;

@@ -182,7 +182,7 @@ div.dialog {
 	display: block;
 	position: absolute;
 	border: 1px solid #777;
-	box-shadow: 4px 4px 15px #777;
+	box-shadow: 4px 4px 15px #00000077;
 	z-index: 9999;
 	padding: 0;
 	border-radius: 7px;

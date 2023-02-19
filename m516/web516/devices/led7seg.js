@@ -81,7 +81,7 @@ let led7seg = (() => {
 	return function (addr) {
 		let interface = {}
 
-		toolWindow('7 Segment Display', 210, 95, `
+		toolWindow('7 Segment Display', 'fit-content', 'fit-content', `
 			<style>
 				svg.led7seg path.segment {
 					fill:none;

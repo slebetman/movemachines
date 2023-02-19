@@ -25,14 +25,21 @@ function toolWindow (title, width, height, content, init) {
 function popupDialog (title, width, height, content) {
 	let windowWidth = document.body.offsetWidth;
 	let windowHeight = document.body.offsetHeight;
-	let x = Math.floor(windowWidth/2 - width/2);
-	let y = Math.floor(windowHeight/2 - height/2);
+	let x = Math.floor(windowWidth/2);
+	let y = Math.floor(windowHeight/2);
+
+	if (typeof width === 'number') {
+		width = `${width}px`;
+	}
+	if (typeof height === 'number') {
+		height = `${height + 18}px`;
+	}
 
 	let main = make('div', {
 		className: 'dialog',
 		style: {
-			width: `${width}px`,
-			height: `${height + 18}px`,
+			width,
+			height,
 			top: `${y}px`,
 			left: `${x}px`,
 		}
