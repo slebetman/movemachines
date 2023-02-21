@@ -396,6 +396,16 @@ proc substLabels {raw} {
 	return $ret
 }
 
+proc findLabelFromAddr {loc} {
+	global labels
+
+	foreach {lab addr} [array get labels] {
+		if {$addr == $loc} {
+			return $lab
+		}
+	}
+}
+
 # test:
 mmacro::init
 set asm [list]
@@ -440,6 +450,7 @@ if {[catch {
 	}
 	set asm [shrinkLabels $asm]
 	set asm [substLabels $asm]
+	set prevInstGen ""
 	foreach inst [string trim $asm] {
 		puts -nonewline "$loc [codeGen $inst] ;"
 		if {[string is integer -strict $inst] &&
@@ -447,8 +458,22 @@ if {[catch {
 		} {
 			set inst [expr {((~($inst-1))&0xffff)*-1}]
 		}
-		puts $inst
+		puts -nonewline $inst
+
+		if {
+			[string is integer -strict $inst] &&
+			[regexp {^pc} $prevInstGen] &&
+			[string length [findLabelFromAddr $inst]]
+		} {
+			puts -nonewline " // [findLabelFromAddr $inst]()"
+		} elseif {[string length [findLabelFromAddr $loc]]} {
+			# If this line has a label add it to the comment
+			puts -nonewline " // :[findLabelFromAddr $loc]"
+		}
+
+		puts ""
 		incr loc
+		set prevInstGen $inst
 	}
 } err]} {
 	error $err
