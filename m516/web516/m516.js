@@ -135,7 +135,7 @@ get('device-manager-btn').onclick = () => deviceManager();
 
 document.body.onkeyup = (e) => {
 	switch (e.key) {
-		case ' ': stop(); break;
+		case 'ArrowLeft': stop(); break;
 		case 'ArrowRight': run(); break;
 		case 'ArrowDown': step(); break;
 	}
