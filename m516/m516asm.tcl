@@ -102,10 +102,16 @@ proc normaliseLiteral {inst} {
 			[mmacro::existDefs $inst {labels defines}]} {
 			
 			return  $inst
+		} elseif {[regexp {^'(\\?.)'$} $inst - ch]} {
+			return [scan [subst $ch] %c]
 		} else {
 			error "Unable to resolve literal: $inst"
 		}
 	} elseif {[llength $inst] == 2} {
+		if {[regexp {^'( )'$} $inst - ch]} {
+			return [scan [subst $ch] %c]
+		}
+
 		# Regular instruction, check for literal:
 		foreach {dst src} $inst break
 		if {[string is integer -strict $src]} {
