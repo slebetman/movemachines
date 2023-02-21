@@ -25,6 +25,38 @@ macro setArray $base $index $val {
 	a $val
 }
 
+macro getByteArray $register $base $index {
+	acu $index
+	acu rsh
+	add $base
+	*a acu
+	acu $index
+	and one
+	pcz $$EVEN
+:$$ODD
+	$register high
+	goto $$END
+:$$EVEN
+	$register low
+:$$END
+}
+
+macro setByteArray $base $index $val {
+	acu $index
+	acu rsh
+	add $base
+	*a acu
+	acu $index
+	and one
+	pcz $$EVEN
+:$$ODD
+	high $val
+	goto $$END
+:$$EVEN
+	low $val
+:$$END
+}
+
 macro clear $addr $size {
 	acu $addr
 	add all
