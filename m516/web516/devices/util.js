@@ -68,7 +68,9 @@ function popupDialog (title, width, height, content) {
 			clientY: e.clientY,
 		}
 
-		document.body.appendChild(main);
+		if (main.nextElementSibling) {
+			document.body.appendChild(main);
+		}
 
 		window.onpointerup = () => {
 			window.onpointermove = undefined;

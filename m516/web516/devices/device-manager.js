@@ -1,15 +1,23 @@
 let deviceManager =(() => {
 	let devices = {
-		'7 Segment Display': {
-			init: () => led7seg(0x0200),
+		'7 Segment Display':
+			() => led7seg(0x0200),
+
+		'7 Segment Display (16 bit)':
+			() => led7seg16bit(0x0200),
+
+		'Serial Terminal':
+			() => serialTerminal(0x2f0),
+	}
+
+	for (let d in devices) {
+		let init = devices[d];
+
+		devices[d] = {
+			init,
 			enabled: false,
 			device: null,
-		},
-		'7 Segment Display (16 bit)': {
-			init: () => led7seg16bit(0x0200),
-			enabled: false,
-			device: null,
-		},
+		}
 	}
 
 	function listDevice (title, prop) {
@@ -53,7 +61,7 @@ let deviceManager =(() => {
 	return function () {
 		let interface = {};
 
-		toolWindow('Device Manager', 350, 80, `
+		toolWindow('Device Manager', 350, 'fit-content', `
 			<style>
 				#device-manager {
 					overflow: auto;
