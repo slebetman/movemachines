@@ -427,6 +427,44 @@ if {[catch {
 						lappend asm [string trim $prevInst]
 						set prevInst ""
 					}
+				} elseif {[regexp -- {^\s*string\s} $x]} {
+					# String literal
+					regexp -- {string\s+(\w+)\s+"(.+)"\s*$} $x - stringLabel stringVal
+					set stringVal [split [subst -nocommands -novariables $stringVal] ""]
+					set labels($stringLabel) [llength $asm]
+					if {$prevInst != ""} {
+						lappend asm [string trim $prevInst]
+						set prevInst ""
+					}
+					foreach char $stringVal {
+						lappend asm [scan $char %c]
+					}
+					lappend asm 0x00 ;# null terminator
+				} elseif {[regexp -- {^\s*bytestring\s} $x]} {
+					# String literal
+					regexp -- {bytestring\s+(\w+)\s+"(.+)"\s*$} $x - stringLabel stringVal
+					set stringVal [split [subst -nocommands -novariables $stringVal] ""]
+					set labels($stringLabel) [llength $asm]
+					if {$prevInst != ""} {
+						lappend asm [string trim $prevInst]
+						set prevInst ""
+					}
+					set even 1
+					foreach {lowchar highchar} $stringVal {
+						set charVal [scan $lowchar %c]
+
+						if {$highchar != ""} {
+							set charVal [expr {$charVal | ([scan $highchar %c] << 8)}]
+						}
+						else {
+							set even 0
+						}
+
+						lappend asm $charVal
+					}
+					if {!$even} {
+						lappend asm 0x00 ;# null terminator
+					}
 				} elseif {$x == "autopack"} {
 					set enable_autopack 1
 				} elseif {$x == "noautopack"} {
