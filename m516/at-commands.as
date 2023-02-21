@@ -27,63 +27,12 @@ goto MAIN
 
 // Strings
 
-:STR_AT
-	'a'
-	't'
-	0x00
-
-:STR_AT_UPPERCASE
-	'A'
-	'T'
-	0x00
-
-:STR_AT_WRITE
-	'a'
-	't'
-	' '
-	'w'
-	' '
-	0x00
-
-:STR_AT_WRITE_UPPERCASE
-	'A'
-	'T'
-	' '
-	'W'
-	' '
-	0x00
-
-:STR_OK
-	'O'
-	'K'
-	'\n'
-	0x00
-
-:STR_INVALID_CMD
-	'E'
-	'R'
-	'R'
-	'O'
-	'R'
-	':'
-	' '
-	'I'
-	'n'
-	'v'
-	'a'
-	'l'
-	'i'
-	'd'
-	' '
-	'c'
-	'o'
-	'm'
-	'm'
-	'a'
-	'n'
-	'd'
-	'\n'
-	0x00
+string STR_AT                 "at"
+string STR_AT_UPPERCASE       "AT"
+string STR_AT_WRITE           "at w "
+string STR_AT_WRITE_UPPERCASE "AT W "
+string STR_OK                 "OK\n"
+string STR_INVALID_CMD        "ERROR: Invalid command\n"
 
 macro incr_reg $REG {
 	acu $REG
