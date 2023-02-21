@@ -8,6 +8,7 @@ define CHAR_BUFFER 0x1a0
 define BUFFER_MAX  16
 define buffer_ptr  m0
 define NEWLINE     10
+define BACKSPACE   8
 
 define UART_STATUS 0x02f0
 define UART_TX     0x02f1
@@ -197,8 +198,8 @@ routine SAVE_BUFFER {
 	// Check if buffer is full
 	acu BUFFER_MAX
 	sub buffer_ptr
-	ifCARRY $$END
-	ifFALSE $$END
+	ifCARRY $$FAIL
+	ifFALSE $$FAIL
 
 	// Save data to buffer
 	acu CHAR_BUFFER
@@ -206,8 +207,34 @@ routine SAVE_BUFFER {
 	*a acu
 	a $$temp
 	incr_reg buffer_ptr
+	acu one
+	return
 
-:$$END
+:$$FAIL
+	acu nil
+	return
+}
+
+routine DELETE_BUFFER {
+	define $$temp m8
+	
+	$$temp acu
+	
+	// Check if buffer is empty
+	acu buffer_ptr
+	ifFALSE $$FAIL
+	
+	acu buffer_ptr
+	sub one
+	buffer_ptr acu
+	add CHAR_BUFFER
+	*a acu
+	a nil
+	acu one
+	return
+
+:$$FAIL
+	acu nil
 	return
 }
 
@@ -253,17 +280,18 @@ routine PRINT_STRING {
 	call READ_CHAR
 	$$char acu
 
-	// Echo if typed
+	// Skip if no data
 	sub 0xffff
 	ifFALSE $$END
-	acu $$char
-	call WRITE_CHAR
 
 :$$NEXT
 	// Check if char is newline:
 	acu $$char
 	sub NEWLINE
 	ifTRUE $$BEFORE_END
+	
+	acu NEWLINE
+	call WRITE_CHAR
 
 	// Check if buffer contains 'at'
 	acu STR_AT
@@ -292,8 +320,20 @@ routine PRINT_STRING {
 	goto INIT
 
 :$$BEFORE_END
-acu $$char
-call SAVE_BUFFER
+	acu $$char
+	// Check if char is backspace here to handle delete char from buffer
+	sub BACKSPACE
+	ifTRUE $$HANDLE_CHAR
+:$$HANDLE_DELETE
+	call DELETE_BUFFER
+	goto $$ECHO
+:$$HANDLE_CHAR
+	acu $$char
+	call SAVE_BUFFER
+:$$ECHO
+	ifFALSE $$END
+	acu $$char
+	call WRITE_CHAR
 
 :$$END
 	goto MAIN
