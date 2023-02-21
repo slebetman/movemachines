@@ -82,4 +82,17 @@ The syntax for referring to a label is simply:
 
 note that it is without the leading ":".
 
+String Literals:
+----------------
+String literals are defined with the syntax:
+
+	string LABEL "literal string"
+
+or
+
+	bytestring LABEL "literal string"
+
+A string literal inserts the char values directly into the instruction stream and
+saves the location of the start of the string as a label.
+
 
