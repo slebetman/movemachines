@@ -351,6 +351,12 @@ function updatePC () {
 			dev.update();
 		}
 	}
+	if (CARRY) {
+		get('carry-dot').style.fill = '#333';
+	}
+	else {
+		get('carry-dot').style.fill = 'none';
+	}
 }
 
 function exec () {

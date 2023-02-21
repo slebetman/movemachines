@@ -161,7 +161,7 @@ label {
 	z-index: 999;
 }
 
-#mhz, #disassembly {
+#mhz, #disassembly, #carry {
 	position: absolute;
 	left: 180px;
 	top: 80px;
@@ -171,6 +171,15 @@ label {
 
 #disassembly {
 	top: 60px;
+}
+
+#carry {
+	top: 100px;
+}
+
+#carry svg {
+	vertical-align: bottom;
+	margin: 0;
 }
 
 polyline {
