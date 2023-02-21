@@ -63,7 +63,7 @@ function showCell (index) {
 
 let ram = get('ram');
 
-for (let i=0; i<=0x1ff; i++) {
+for (let i=0; i<=0x7ff; i++) {
 	ram.appendChild(makeCell(i, 0));
 }
 

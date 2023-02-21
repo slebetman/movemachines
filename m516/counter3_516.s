@@ -19,4 +19,4 @@
 assemble counter3_516.as counter3.516
 newRam
 loadFile counter3.516
-loadDevice {./devices/Calculator.dev} 0x200 0x201 0x202 0x203
+loadDevice {./devices/Calculator.dev} 0xf000 0xf001 0xf002 0xf003

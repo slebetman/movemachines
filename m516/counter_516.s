@@ -19,4 +19,4 @@
 assemble counter_516.as counter.516
 newRam
 loadFile counter.516
-loadDevice {./devices/7 seg LED.dev} 0x200 0x201 0x202 0x203
+loadDevice {./devices/7 seg LED.dev} 0xf000 0xf001 0xf002 0xf003

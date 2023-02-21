@@ -7,7 +7,7 @@
 wm geometry . 610x410
 wm minsize . 610 410
 
-set maxRam 0x0200
+set maxRam 0x0800
 set instruction ""
 set speedHz "-"
 set hzCount 0

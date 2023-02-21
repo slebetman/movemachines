@@ -5,8 +5,8 @@
 include 516inc.as
 autopack
 
-define LED01   0x200
-define LED23   0x201
+define LED01   0xf000
+define LED23   0xf001
 
 define SCRATCH 0x100
 define STACK   0x140
@@ -17,7 +17,7 @@ define STACK   0x140
 	*m lit SCRATCH
 
 #----------------------------------------------------
-#use 7 segment lcds memory mapped to 0x200 and 0x201
+#use 7 segment lcds memory mapped to 0xf000 and 0xf001
 
 #note: for subroutines, the comment convention is:
 #(passed via b)[passed via acu]

@@ -1,13 +1,13 @@
 let deviceManager =(() => {
 	let devices = {
 		'7 Segment Display':
-			() => led7seg(0x0200),
+			() => led7seg(0x0f000),
 
 		'7 Segment Display (16 bit)':
-			() => led7seg16bit(0x0200),
+			() => led7seg16bit(0x0f000),
 
 		'Serial Terminal':
-			() => serialTerminal(0x2f0),
+			() => serialTerminal(0xf0f0),
 	}
 
 	for (let d in devices) {
