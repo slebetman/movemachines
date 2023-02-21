@@ -455,8 +455,7 @@ if {[catch {
 
 						if {$highchar != ""} {
 							set charVal [expr {$charVal | ([scan $highchar %c] << 8)}]
-						}
-						else {
+						} else {
 							set even 0
 						}
 
