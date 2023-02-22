@@ -1,4 +1,4 @@
-0 0x1630 ;*b lit
+0 0x1630 ;*b lit // :INIT
 1 0x0140 ;320
 2 0x19b0 ;*m lit
 3 0x0100 ;256
@@ -7,74 +7,74 @@
 6 0xe272 ;a nil;+a nil
 7 0xf272 ;+a nil;+a nil
 8 0x02b0 ;*a lit
-9 0x0200 ;512
+9 0xf000 ;-4096
 10 0xe272 ;a nil;+a nil
 11 0xf272 ;+a nil;+a nil
 12 0x17b0 ;pc lit
-13 0x001f ;31
-14 0x1732 ;+b ret
+13 0x001f ;31 // _s13b2LOOP()
+14 0x1732 ;+b ret // :INCR_BCD
 15 0x91f0 ;add one;m7 acu
 16 0x600a ;sub lit;10
 17 0x18b0 ;pcc lit
-18 0x0017 ;23
+18 0x0017 ;23 // _seaaNEXT()
 19 0x192e ;ret b-
 20 0x1702 ;+b nil
 21 0x0001 ;acu one
 22 0x17b2 ;pc ret
-23 0x192e ;ret b-
+23 0x192e ;ret b- // :_seaaNEXT
 24 0x170f ;+b m7
 25 0x0002 ;acu nil
 26 0x17b2 ;pc ret
-27 0x700f ;and lit;0x0f
+27 0x700f ;and lit;0x0f // :GET_FONT
 28 0x504c ;add lit; 76
 29 0xd006 ;*a acu;acu a
 30 0x17b2 ;pc ret
-31 0x0008 ;acu m0
+31 0x0008 ;acu m0 // :_s13b2LOOP
 32 0x17b0 ;pc lit
-33 0x000e ;14
+33 0x000e ;14 // INCR_BCD()
 34 0x042e ;m0 b-
 35 0x1830 ;pcz lit
-36 0x0035 ;53
+36 0x0035 ;53 // _s13b2NEXT()
 37 0x0009 ;acu m1
 38 0x17b0 ;pc lit
-39 0x000e ;14
+39 0x000e ;14 // INCR_BCD()
 40 0x04ae ;m1 b-
 41 0x1830 ;pcz lit
-42 0x0035 ;53
+42 0x0035 ;53 // _s13b2NEXT()
 43 0x000a ;acu m2
 44 0x17b0 ;pc lit
-45 0x000e ;14
+45 0x000e ;14 // INCR_BCD()
 46 0x052e ;m2 b-
 47 0x1830 ;pcz lit
-48 0x0035 ;53
+48 0x0035 ;53 // _s13b2NEXT()
 49 0x000b ;acu m3
 50 0x17b0 ;pc lit
-51 0x000e ;14
+51 0x000e ;14 // INCR_BCD()
 52 0x05ae ;m3 b-
-53 0x0008 ;acu m0
+53 0x0008 ;acu m0 // :_s13b2NEXT
 54 0x17b0 ;pc lit
-55 0x001b ;27
+55 0x001b ;27 // GET_FONT()
 56 0x02b0 ;*a lit
-57 0x0200 ;512
+57 0xf000 ;-4096
 58 0xe009 ;a acu;acu m1
 59 0x17b0 ;pc lit
-60 0x001b ;27
+60 0x001b ;27 // GET_FONT()
 61 0x02b0 ;*a lit
-62 0x0201 ;513
+62 0xf001 ;-4095
 63 0xe00a ;a acu;acu m2
 64 0x17b0 ;pc lit
-65 0x001b ;27
+65 0x001b ;27 // GET_FONT()
 66 0x02b0 ;*a lit
-67 0x0202 ;514
+67 0xf002 ;-4094
 68 0xe00b ;a acu;acu m3
 69 0x17b0 ;pc lit
-70 0x001b ;27
+70 0x001b ;27 // GET_FONT()
 71 0x02b0 ;*a lit
-72 0x0203 ;515
+72 0xf003 ;-4093
 73 0x0300 ;a acu
 74 0x17b0 ;pc lit
-75 0x001f ;31
-76 0x0077 ;119
+75 0x001f ;31 // _s13b2LOOP()
+76 0x0077 ;119 // :FONT_TABLE
 77 0x0024 ;36
 78 0x005d ;93
 79 0x006d ;109
