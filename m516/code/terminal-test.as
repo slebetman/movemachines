@@ -1,27 +1,14 @@
 include 516inc.as
 autopack
 
-define UART_STATUS 0x02f0
-define UART_TX     0x02f1
-define UART_RX     0x02f2
+define UART_STATUS 0xf0f0
+define UART_TX     0xf0f1
+define UART_RX     0xf0f2
 define TXF_MASK    0x0001
 
 goto MAIN
 
-:HELLO_STRING
-	'H'
-	'e'
-	'l'
-	'l'
-	'o'
-	' '
-	'W'
-	'o'
-	'r'
-	'l'
-	'd'
-	'\n'
-	0x00
+string HELLO_STRING "Hello World\n"
 
 :MAIN
 
