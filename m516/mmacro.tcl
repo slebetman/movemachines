@@ -114,24 +114,20 @@ namespace eval mmacro {
 			}
 
 			if {[regexp -- {^\s*if defined\s+(\S+)} $line -> name]} {
-				if {[info exists name]} {
-					if {[info exists defines($name)]} {
-						debug DEFINED
-						set ifdef "OK"
-					} else {
-						debug UNDEFINED
-						set ifdef "IGNORE"
-					}
+				if {[info exists defines($name)]} {
+					debug DEFINED
+					set ifdef "OK"
+				} else {
+					debug UNDEFINED
+					set ifdef "IGNORE"
 				}
 			} elseif {[regexp -- {^\s*if undefined\s+(\S+)} $line -> name]} {
-				if {[info exists name]} {
-					if {[info exists defines($name)]} {
-						debug DEFINED
-						set ifdef "IGNORE"
-					} else {
-						debug UNDEFINED
-						set ifdef "OK"
-					}
+				if {[info exists defines($name)]} {
+					debug DEFINED
+					set ifdef "IGNORE"
+				} else {
+					debug UNDEFINED
+					set ifdef "OK"
 				}
 			} elseif {[regexp -- {^\s*define\s+(\S+)\s+(.+)} $line -> name val]} {
 				set defines($name) [list]
