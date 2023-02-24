@@ -12,8 +12,93 @@ macro ifStringEnd $STR $GOTO {
 	ifFALSE $GOTO
 }
 
+macro ifLowEnd $STR $GOTO else $ELSE {
+	*a $STR
+	*a a
+	acu low
+	ifFALSE $GOTO else $ELSE
+}
+
+macro ifLowEnd $STR $GOTO {
+	*a $STR
+	*a a
+	acu low
+	ifFALSE $GOTO
+}
+
+macro ifHighEnd $STR $GOTO else $ELSE {
+	*a $STR
+	*a a
+	acu high
+	ifFALSE $GOTO else $ELSE
+}
+
+macro ifHighEnd $STR $GOTO {
+	*a $STR
+	*a a
+	acu high
+	ifFALSE $GOTO
+}
+
+macro bytestrlen $STR {
+	if undefined BYTE_STR_LEN_IMPLEMENTATION
+	define BYTE_STR_LEN_IMPLEMENTATION 1
+	goto $$START
+
+	// [str_addr] => acu
+	routine BYTE_STR_LEN {
+		+b *a // save *a
+
+		// stack is: *a, ret, str
+
+		+b nil // string length
+
+		// stack is: len, *a, ret, str
+		acu *b
+		sub lit 2
+		*a acu
+		swap_reg a b
+
+		// stack is: ret, *a, len, str
+		acu *b
+		sub lit 3
+		*a acu
+		swap_reg a b
+
+		// stack is: str, *a, len, ret
+		acu *b
+		sub lit 2
+		*a acu     // a is now pointing to len
+		
+	:$$LOOP
+		// Check if end of str
+		ifLowEnd b $$END
+		incr_reg a
+
+		ifHighEnd b $$END
+		incr_reg a
+
+		incr_reg b
+
+		goto $$LOOP
+
+	:$$END
+		acu b-
+		*a b-  // restore *a
+		acu b- // pop len into acu
+
+		return
+	}
+
+	:$$START
+	end undefined
+
+	acu $STR
+	call BYTE_STR_LEN
+}
+
 macro strlen $STR {
-	if undefined STR_LEN_IMPLEMENTATION 
+	if undefined STR_LEN_IMPLEMENTATION
 	define STR_LEN_IMPLEMENTATION 1
 	goto $$START
 
@@ -66,8 +151,102 @@ macro strlen $STR {
 	call STR_LEN
 }
 
+macro bytestreq $STR1 $STR2 {
+	if undefined BYTE_STR_EQ_IMPLEMENTATION
+	define BYTE_STR_EQ_IMPLEMENTATION 1
+	goto $$START
+
+	// (str1_addr, str2_addr) => acu
+	routine BYTE_STR_EQ {
+		+b *a // save *a and restore later
+
+		// Let's re-arrange the stack so we can simply return later
+		// stack is: *a, ret, str1, str2
+		acu *b
+		sub lit 3
+		*a acu
+		decr_reg *b
+		swap_reg a b
+		incr_reg *b
+		// stack is: *a, str2, str1, ret
+
+	:$$LOOP
+		// Compare char 2 bytes at a time
+		acu *b        // get value at str2
+		sub one
+		+b deref acu  // save value of str2 to stack
+		acu *b        // get value at str1
+		sub lit 2
+		acu deref acu
+		sub b-        // pop value of str2 and compare
+		ifTRUE $$END_FALSE
+
+		// If we are here it means the string matches up to this point
+		// Now we need to find out if both string ends, if not we need to loop
+
+		// Check if high byte is string end. Don't need to check
+		// both strings because they match.
+		ifHighEnd b $$END_TRUE
+
+		// Increment str2
+		acu *b
+		sub one
+		incr acu
+		// Increment str1
+		acu *b
+		sub lit 2
+		incr acu
+
+		// Check if end of str2
+		acu *b
+		sub one
+		ifLowEnd acu $$STR2_END
+
+		// Check if end of str1
+		acu *b
+		sub lit 2
+		// if str1 end here it means str2 is not end so obviously no match
+		ifLowEnd acu $$END_FALSE
+
+		// Note: We don't need to check if high end because that is
+		//       already handled above.
+
+		// Not end of either strings so we should loop
+		goto $$LOOP
+
+	// If both buffer and string end then they are the same
+	:$$STR2_END
+		// Check if end of str1
+		acu *b
+		sub lit 2
+		ifLowEnd acu $$END_TRUE else $$END_FALSE
+
+	// stack is: *a, str2, str1, ret
+
+	:$$END_TRUE
+		*a b- // restore *a
+		acu b-
+		acu b-
+		acu one
+		return
+	:$$END_FALSE
+		*a b- // restore *a
+		acu b-
+		acu b-
+		acu nil
+		return
+	}
+
+	:$$START
+	end undefined
+
+	+b $STR1
+	+b $STR2
+	call BYTE_STR_EQ
+}
+
 macro streq $STR1 $STR2 {
-	if undefined STR_EQ_IMPLEMENTATION 
+	if undefined STR_EQ_IMPLEMENTATION
 	define STR_EQ_IMPLEMENTATION 1
 	goto $$START
 
