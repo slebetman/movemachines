@@ -418,6 +418,10 @@ if {[catch {
 		set linecount 1
 		foreach x $code {
 			set x [string trim $x]
+			if {$x == "" || $x == "\{\}"} {
+				# skip empty lines
+				continue
+			}
 			if {[catch {
 				if {[regexp -- {^\s*\:} $x]} {
 					# Label:
