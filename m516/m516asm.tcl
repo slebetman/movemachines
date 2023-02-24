@@ -1,7 +1,7 @@
 #! /usr/bin/env tclsh
 
 # package require adlib
-source mmacro.tcl
+source [file join [file dirname [file normalize [info script]]] mmacro.tcl]
 
 # Set this to 0 to disable autopack:
 set enable_autopack 1
