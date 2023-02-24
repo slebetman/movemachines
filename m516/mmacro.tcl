@@ -1,5 +1,9 @@
 # package require fileparse
 
+proc debug {txt} {
+	# puts $txt
+}
+
 proc eachline {var filename body} {
 	upvar 1 $var v
 	set f [open $filename]
@@ -14,7 +18,7 @@ proc eachline {var filename body} {
 
 namespace eval mmacro {
 	proc init {} {
-		global defines labels macros macroBuffer magic magiclist
+		global defines labels macros macroBuffer magic magiclist ifdef ifdefBraceCount
 		
 		array set defines {}
 		array set labels {}
@@ -23,6 +27,8 @@ namespace eval mmacro {
 		set macroBuffer ""
 		set magic 0
 		set magiclist $magic
+		set ifdefBraceCount 0
+		set ifdef ""
 	}
 
 	proc lookUp {x definitions} {
@@ -91,11 +97,43 @@ namespace eval mmacro {
 	}
 
 	proc parseDefine {raw} {
-		global defines labels
-		
+		global defines labels ifdef ifdefBraceCount
+
 		set ret ""
 		foreach line [split $raw \n] {
-			if {[regexp -- {^\s*define\s+(\S+)\s+(.+)} $line -> name val]} {
+			if {[regexp -- {^\s*end (un)?defined} $line]} {
+				set ifdef ""
+				continue
+			}
+			if {$ifdef != ""} {
+				debug "ifdef = $ifdef"
+
+				if {$ifdef == "IGNORE"} {
+					continue
+				}
+			}
+
+			if {[regexp -- {^\s*if defined\s+(\S+)} $line -> name]} {
+				if {[info exists name]} {
+					if {[info exists defines($name)]} {
+						debug DEFINED
+						set ifdef "OK"
+					} else {
+						debug UNDEFINED
+						set ifdef "IGNORE"
+					}
+				}
+			} elseif {[regexp -- {^\s*if undefined\s+(\S+)} $line -> name]} {
+				if {[info exists name]} {
+					if {[info exists defines($name)]} {
+						debug DEFINED
+						set ifdef "IGNORE"
+					} else {
+						debug UNDEFINED
+						set ifdef "OK"
+					}
+				}
+			} elseif {[regexp -- {^\s*define\s+(\S+)\s+(.+)} $line -> name val]} {
 				set defines($name) [list]
 				foreach v $val {
 					if {[string is integer -strict $v]} {
@@ -178,6 +216,8 @@ namespace eval mmacro {
 	proc substMacros {raw} {
 		global macros magic magiclist
 
+		debug "------------ substMacros"
+
 		foreach x $macros {
 			set pattern [lindex $x 0]
 			set vars [lindex $x 1]
@@ -206,6 +246,8 @@ namespace eval mmacro {
 					
 					set map [join [lsort -decreasing $map]]
 					set sub [string map $map $body]
+					debug "----------- SUB\n$sub"
+					set sub [parseDefine $sub]
 					set raw [regsub -- "(?q)$match" $raw $sub]
 				}
 			}
@@ -302,6 +344,10 @@ namespace eval mmacro {
 			set temp [split $line \n]
 			set line [list]
 			foreach n $temp {
+				if {$n != ""} {
+					debug "// $fname:$i -- [string trim $n]"
+				}
+
 				if {[regexp -- {^\s*include\s+(.+)} $n -> incfile]} {
 					set incfile [string trim $incfile]
 					set n [uplevel 1 [list mmacro::parse n $incfile $script]]
