@@ -1,4 +1,5 @@
 include 516inc.as
+include strings.as
 autopack
 
 define SCRATCH 0x1c0
@@ -20,7 +21,7 @@ define RXF_MASK    0x0100
 	*b lit STACK
 	*m lit SCRATCH
 
-	clear CHAR_BUFFER BUFFER_MAX
+	clear CHAR_BUFFER 17
 	buffer_ptr nil
 }
 
@@ -34,91 +35,6 @@ string STR_AT_WRITE           "at w "
 string STR_AT_WRITE_UPPERCASE "AT W "
 string STR_OK                 "OK\n"
 string STR_INVALID_CMD        "ERROR: Invalid command\n"
-
-macro incr_reg $REG {
-	acu $REG
-	add one
-	$REG acu
-}
-
-{:CHAR_COMPARE
-	define $$string_idx m8
-	define $$buffer_idx m9
-	define $$result     m10
-	define $$tmp        m24
-
-	*a $$string_idx
-	incr_reg $$string_idx
-	$$tmp a
-
-	*a $$buffer_idx
-	incr_reg $$buffer_idx
-
-	// Compare string with buffer -- 0 if same
-	acu $$tmp
-	sub a
-	$$result acu
-
-	pc ret
-}
-
-routine BUF_EQUAL {
-	define $$string_idx m8
-	define $$buffer_idx m9
-	define $$result     m10
-	define $$end_buf    m11
-	define $$end_str    m12
-	define $$tmp        m13
-
-	$$string_idx acu
-	$$buffer_idx CHAR_BUFFER
-	$$result nil
-	$$end_buf nil
-	$$end_str nil
-
-:$$LOOP
-	call CHAR_COMPARE
-	ifTRUE $$END
-
-	// Check if max buffer
-	acu $$buffer_idx
-	sub CHAR_BUFFER
-	$$tmp acu
-	acu BUFFER_MAX
-	sub $$tmp
-	ifFALSE $$BUFFER_END
-
-	// Check if end of string
-	*a $$string_idx
-	acu a
-	ifFALSE $$STRING_END
-
-	goto $$LOOP
-
-// If both buffer and string end then they are the same
-:$$BUFFER_END
-	// Check if end of string
-	*a $$string_idx
-	acu a
-	ifFALSE $$END_TRUE else $$END_FALSE
-:$$STRING_END
-	// Check if end of buffer
-	*a $$buffer_idx
-	acu a
-	ifFALSE $$END_TRUE else $$END_FALSE
-
-// invert result to get conventional true/false value	
-:$$END
-	acu $$result
-	ifFALSE $$END_TRUE
-	goto $$END_FALSE
-:$$END_TRUE
-	acu one
-	return
-:$$END_FALSE
-	acu nil
-	return
-}
 
 routine READ_CHAR {
 	define $$temp m8
@@ -244,8 +160,7 @@ routine PRINT_STRING {
 	call WRITE_CHAR
 
 	// Check if buffer contains 'at'
-	acu STR_AT
-	call BUF_EQUAL
+	streq STR_AT CHAR_BUFFER
 	pcz $$NEXT2
 	{
 		acu STR_OK
@@ -254,8 +169,7 @@ routine PRINT_STRING {
 	goto INIT
 :$$NEXT2
 	// Check if buffer contains 'AT'
-	acu STR_AT_UPPERCASE
-	call BUF_EQUAL
+	streq STR_AT_UPPERCASE CHAR_BUFFER
 	pcz $$NEXT3
 	{
 		acu STR_OK
