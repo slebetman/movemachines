@@ -465,7 +465,7 @@ if {[catch {
 
 						lappend asm $charVal
 					}
-					if {!$even} {
+					if {$even} {
 						lappend asm 0x00 ;# null terminator
 					}
 				} elseif {$x == "autopack"} {
