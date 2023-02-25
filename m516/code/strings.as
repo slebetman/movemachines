@@ -176,7 +176,7 @@ macro bytestreq $STR1 $STR2 {
 		sub one
 		+b deref acu  // save value of str2 to stack
 		acu *b        // get value at str1
-		sub lit 2
+		sub lit 3
 		acu deref acu
 		sub b-        // pop value of str2 and compare
 		ifTRUE $$END_FALSE
@@ -270,7 +270,7 @@ macro streq $STR1 $STR2 {
 		sub one
 		+b deref acu  // save value of str2 to stack
 		acu *b        // get value at str1
-		sub lit 2
+		sub lit 3
 		acu deref acu
 		sub b-        // pop value of str2 and compare
 		ifTRUE $$END_FALSE
