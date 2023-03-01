@@ -40,6 +40,31 @@ macro ifHighEnd $STR $GOTO {
 	ifFALSE $GOTO
 }
 
+macro strlen_rearrange_stack {
+	// [str_addr] => acu
+
+	// stack is: *a, ret, str
+
+	+b nil // string length
+
+	// stack is: len, *a, ret, str
+	acu *b
+	sub lit 2
+	*a acu
+	swap_reg a b
+
+	// stack is: ret, *a, len, str
+	acu *b
+	sub lit 3
+	*a acu
+	swap_reg a b
+
+	// stack is: str, *a, len, ret
+	acu *b
+	sub lit 2
+	*a acu     // a is now pointing to len
+}
+
 macro bytestrlen $STR {
 	if undefined BYTE_STR_LEN_IMPLEMENTATION
 	define BYTE_STR_LEN_IMPLEMENTATION 1
@@ -49,26 +74,10 @@ macro bytestrlen $STR {
 	routine BYTE_STR_LEN {
 		+b *a // save *a
 
-		// stack is: *a, ret, str
-
-		+b nil // string length
-
-		// stack is: len, *a, ret, str
-		acu *b
-		sub lit 2
-		*a acu
-		swap_reg a b
-
-		// stack is: ret, *a, len, str
-		acu *b
-		sub lit 3
-		*a acu
-		swap_reg a b
+		strlen_rearrange_stack
 
 		// stack is: str, *a, len, ret
-		acu *b
-		sub lit 2
-		*a acu     // a is now pointing to len
+		//            b        a
 		
 	:$$LOOP
 		// Check if end of str
@@ -106,26 +115,10 @@ macro strlen $STR {
 	routine STR_LEN {
 		+b *a // save *a
 
-		// stack is: *a, ret, str
-
-		+b nil // string length
-
-		// stack is: len, *a, ret, str
-		acu *b
-		sub lit 2
-		*a acu
-		swap_reg a b
-
-		// stack is: ret, *a, len, str
-		acu *b
-		sub lit 3
-		*a acu
-		swap_reg a b
+		strlen_rearrange_stack
 
 		// stack is: str, *a, len, ret
-		acu *b
-		sub lit 2
-		*a acu     // a is now pointing to len
+		//            b        a
 		
 	:$$LOOP
 		// Check if end of str
@@ -151,7 +144,19 @@ macro strlen $STR {
 	call STR_LEN
 }
 
-macro bytestreq $STR1 $STR2 {
+macro strequal_rearrange_stack {
+	// Let's re-arrange the stack so we can simply return later
+	// stack is: *a, ret, str1, str2
+	acu *b
+	sub lit 3
+	*a acu
+	decr_reg *b
+	swap_reg a b
+	incr_reg *b
+	// stack is: *a, str2, str1, ret
+}
+
+macro bytestrequal $STR1 $STR2 {
 	if undefined BYTE_STR_EQ_IMPLEMENTATION
 	define BYTE_STR_EQ_IMPLEMENTATION 1
 	goto $$START
@@ -160,14 +165,8 @@ macro bytestreq $STR1 $STR2 {
 	routine BYTE_STR_EQ {
 		+b *a // save *a and restore later
 
-		// Let's re-arrange the stack so we can simply return later
-		// stack is: *a, ret, str1, str2
-		acu *b
-		sub lit 3
-		*a acu
-		decr_reg *b
-		swap_reg a b
-		incr_reg *b
+		strequal_rearrange_stack
+
 		// stack is: *a, str2, str1, ret
 
 	:$$LOOP
@@ -245,7 +244,7 @@ macro bytestreq $STR1 $STR2 {
 	call BYTE_STR_EQ
 }
 
-macro streq $STR1 $STR2 {
+macro strequal $STR1 $STR2 {
 	if undefined STR_EQ_IMPLEMENTATION
 	define STR_EQ_IMPLEMENTATION 1
 	goto $$START
@@ -254,14 +253,8 @@ macro streq $STR1 $STR2 {
 	routine STR_EQ {
 		+b *a // save *a and restore later
 
-		// Let's re-arrange the stack so we can simply return later
-		// stack is: *a, ret, str1, str2
-		acu *b
-		sub lit 3
-		*a acu
-		decr_reg *b
-		swap_reg a b
-		incr_reg *b
+		strequal_rearrange_stack
+		
 		// stack is: *a, str2, str1, ret
 
 	:$$LOOP
@@ -330,4 +323,161 @@ macro streq $STR1 $STR2 {
 	+b $STR1
 	+b $STR2
 	call STR_EQ
+}
+
+macro bytestrstart $NEEDLE $HAYSTACK {
+	if undefined BYTE_STR_START_IMPLEMENTATION
+	define BYTE_STR_START_IMPLEMENTATION 1
+	goto $$START
+
+	// (NEEDLE_addr, HAYSTACK_addr) => acu
+	routine BYTE_STR_START {
+		+b *a // save *a and restore later
+
+		strequal_rearrange_stack
+		
+		// stack is: *a, HAYSTACK, NEEDLE, ret
+
+	:$$LOOP
+		// Compare char 2 bytes at a time
+		acu *b        // get value at HAYSTACK
+		sub one
+		+b deref acu  // save value of HAYSTACK to stack
+		acu *b        // get value at NEEDLE
+		sub lit 3
+		acu deref acu
+		sub b-        // pop value of HAYSTACK and compare
+		ifTRUE $$END_FALSE
+
+		// If we are here it means the string matches up to this point
+		// Now we need to find out if both string ends, if not we need to loop
+
+		// Check if end of NEEDLE
+		acu *b
+		sub lit 2
+		if ifHighEnd acu $$END_TRUE
+
+		// Increment HAYSTACK
+		acu *b
+		sub one
+		incr acu
+		// Increment NEEDLE
+		acu *b
+		sub lit 2
+		incr acu
+
+		// Check if end of NEEDLE
+		acu *b
+		sub lit 2
+		// if NEEDLE end here it means HAYSTACK starts with NEEDLE
+		ifLowEnd acu $$END_TRUE
+
+		// Check if end of HAYSTACK
+		acu *b
+		sub one
+		// if HAYSTACK end here it means HAYSTACK is shorter than NEEDLE
+		ifLowEnd acu $$END_FALSE
+
+		// Not end of either strings so we should loop
+		goto $$LOOP
+
+
+	// stack is: *a, HAYSTACK, NEEDLE, ret
+
+	:$$END_TRUE
+		*a b- // restore *a
+		acu b-
+		acu b-
+		acu one
+		return
+	:$$END_FALSE
+		*a b- // restore *a
+		acu b-
+		acu b-
+		acu nil
+		return
+	}
+
+	:$$START
+	end undefined
+
+	+b $NEEDLE
+	+b $HAYSTACK
+	call BYTE_STR_START
+}
+
+macro strstart $NEEDLE $HAYSTACK {
+	if undefined STR_START_IMPLEMENTATION
+	define STR_START_IMPLEMENTATION 1
+	goto $$START
+
+	// (NEEDLE_addr, HAYSTACK_addr) => acu
+	routine STR_START {
+		+b *a // save *a and restore later
+
+		strequal_rearrange_stack
+		
+		// stack is: *a, HAYSTACK, NEEDLE, ret
+
+	:$$LOOP
+		// Compare char
+		acu *b        // get value at HAYSTACK
+		sub one
+		+b deref acu  // save value of HAYSTACK to stack
+		acu *b        // get value at NEEDLE
+		sub lit 3
+		acu deref acu
+		sub b-        // pop value of HAYSTACK and compare
+		ifTRUE $$END_FALSE
+
+		// Increment HAYSTACK
+		acu *b
+		sub one
+		incr acu
+		// Increment NEEDLE
+		acu *b
+		sub lit 2
+		incr acu
+
+		// If we are here it means the string matches up to this point
+		// Now we need to find out if both string ends, if not we need to loop
+
+		// Check if end of NEEDLE
+		acu *b
+		sub lit 2
+		// if NEEDLE end here it means HAYSTACK starts with NEEDLE
+		ifStringEnd acu $$END_TRUE
+
+		// Check if end of HAYSTACK
+		acu *b
+		sub one
+		// if HAYSTACK end here it means HAYSTACK is shorter than NEEDLE
+		ifStringEnd acu $$END_FALSE
+
+		// Not end of either strings so we should loop
+		goto $$LOOP
+
+
+	// stack is: *a, HAYSTACK, NEEDLE, ret
+
+	:$$END_TRUE
+		*a b- // restore *a
+		acu b-
+		acu b-
+		acu one
+		return
+	:$$END_FALSE
+		*a b- // restore *a
+		acu b-
+		acu b-
+		acu nil
+		return
+	}
+
+	:$$START
+	end undefined
+
+	+b $NEEDLE
+	+b $HAYSTACK
+	call STR_START
 }
