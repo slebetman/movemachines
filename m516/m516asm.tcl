@@ -506,7 +506,7 @@ if {[catch {
 			[regexp {^pc} $prevInstGen] &&
 			[string length [findLabelFromAddr $inst]]
 		} {
-			puts -nonewline " // [findLabelFromAddr $inst]()"
+			puts -nonewline " // call [findLabelFromAddr $inst]"
 		} elseif {[string length [findLabelFromAddr $loc]]} {
 			# If this line has a label add it to the comment
 			puts -nonewline " // :[findLabelFromAddr $loc]"
