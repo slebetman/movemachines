@@ -160,7 +160,7 @@ routine PRINT_STRING {
 	call WRITE_CHAR
 
 	// Check if buffer contains 'at'
-	streq STR_AT CHAR_BUFFER
+	strequal STR_AT CHAR_BUFFER
 	pcz $$NEXT2
 	{
 		acu STR_OK
@@ -169,7 +169,7 @@ routine PRINT_STRING {
 	goto INIT
 :$$NEXT2
 	// Check if buffer contains 'AT'
-	streq STR_AT_UPPERCASE CHAR_BUFFER
+	strequal STR_AT_UPPERCASE CHAR_BUFFER
 	pcz $$NEXT3
 	{
 		acu STR_OK

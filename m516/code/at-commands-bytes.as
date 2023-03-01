@@ -151,7 +151,7 @@ routine PRINT_STRING {
 
 :$$LOOP
 	$$string_idx acu
-	
+
 	*a $$string_idx
 	acu low
 	ifFALSE $$END // found null terminator
@@ -169,6 +169,11 @@ routine PRINT_STRING {
 
 :$$END
 	return
+}
+
+macro print $STR {
+	acu $STR
+	call PRINT_STRING
 }
 
 {:MAIN
@@ -189,26 +194,23 @@ routine PRINT_STRING {
 	acu NEWLINE
 	call WRITE_CHAR
 
-	bytestreq STR_AT CHAR_BUFFER
+	bytestrequal STR_AT CHAR_BUFFER
 	pcz $$NEXT2
 	{
-		acu STR_OK
-		call PRINT_STRING
+		print STR_OK
 	}
 	goto INIT
 :$$NEXT2
 	// Check if buffer contains 'AT'
-	bytestreq STR_AT_UPPERCASE CHAR_BUFFER
+	bytestrequal STR_AT_UPPERCASE CHAR_BUFFER
 	pcz $$NEXT3
 	{
-		acu STR_OK
-		call PRINT_STRING
+		print STR_OK
 	}
 	goto INIT
 :$$NEXT3
 	{
-		acu STR_INVALID_CMD
-		call PRINT_STRING
+		print STR_INVALID_CMD
 	}
 	goto INIT
 
