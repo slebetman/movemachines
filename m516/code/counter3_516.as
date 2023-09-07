@@ -18,17 +18,19 @@ define n45 0x102
 
 :INIT
 {
-#point *b to top of stack
+	#point *b to top of stack
+
 	*b lit STACK
 	*m lit SCRATCH
 
-#----------------------------------------------------
-#use 7 segment lcds memory mapped to 0xf000 and 0xf001
+	#----------------------------------------------------
+	#use 7 segment lcds memory mapped to 0xf000 and 0xf001
 
-#note: for subroutines, the comment convention is:
-#(passed via b)[passed via acu]
+	#note: for subroutines, the comment convention is:
+	#(passed via b)[passed via acu]
 
-#clear display
+	#clear display
+
 	*a lit SCRATCH
 	a nil
 	+a nil
@@ -78,27 +80,29 @@ define n45 0x102
 	+b m7
 	acu nil
 	pc ret
+}
 
-	macro BCD++ $register
-	{
-		acu $register
-		call INCR_BCD
-		$register b-
-	}
-	macro BCDlow++ $addr
-	{
-		*a $addr
-		acu low
-		call INCR_BCD
-		low b-
-	}
-	macro BCDhigh++ $addr
-	{
-		*a $addr
-		acu high
-		call INCR_BCD
-		high b-
-	}
+macro BCD++ $register
+{
+	acu $register
+	call INCR_BCD
+	$register b-
+}
+
+macro BCDlow++ $addr
+{
+	*a $addr
+	acu low
+	call INCR_BCD
+	low b-
+}
+
+macro BCDhigh++ $addr
+{
+	*a $addr
+	acu high
+	call INCR_BCD
+	high b-
 }
 
 
@@ -109,30 +113,32 @@ define n45 0x102
 	*a acu
 	acu a
 	pc ret
+}
 
-	macro $dest $mode getFont $register
-	{
-		acu $register
-		call GET_FONT
-		*a $dest
-		$mode acu
-	}
-	macro $dest getFontLow $addr
-	{
-		*a $addr
-		acu low
-		call GET_FONT
-		*a $dest
-		low acu
-	}
-	macro $dest getFontHigh $addr
-	{
-		*a $addr
-		acu high
-		call GET_FONT
-		*a $dest
-		high acu
-	}
+macro $dest $mode getFont $register
+{
+	acu $register
+	call GET_FONT
+	*a $dest
+	$mode acu
+}
+
+macro $dest getFontLow $addr
+{
+	*a $addr
+	acu low
+	call GET_FONT
+	*a $dest
+	low acu
+}
+
+macro $dest getFontHigh $addr
+{
+	*a $addr
+	acu high
+	call GET_FONT
+	*a $dest
+	high acu
 }
 
 :START
