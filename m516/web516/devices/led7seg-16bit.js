@@ -84,6 +84,7 @@ let led7seg16bit = (() => {
 		// Stop if something else is already installed!
 		if (memDevices[addr]) return;
 		if (memDevices[addr+1]) return;
+		if (memDevices[addr+2]) return;
 
 		toolWindow('16bit 7 Seg. Display', 'fit-content', 'fit-content', `
 			<style>
@@ -101,6 +102,8 @@ let led7seg16bit = (() => {
 				}
 			</style>
 			<div id="led7seg">
+				${LED7draw(5)}
+				${LED7draw(4)}
 				${LED7draw(3)}
 				${LED7draw(2)}
 				${LED7draw(1)}
@@ -124,7 +127,7 @@ let led7seg16bit = (() => {
 			let cache = [0,0,0,0];
 			let updated = [false, false, false, false];
 			
-			for (let i=0; i<4; i+=2) {
+			for (let i=0; i<6; i+=2) {
 				attachMemDevice(addr + i/2,
 					() => {
 						return cache[i];
@@ -146,7 +149,7 @@ let led7seg16bit = (() => {
 			}
 
 			w.cleanup = () => {
-				for (let i=0; i<2; i++) {
+				for (let i=0; i<3; i++) {
 					removeMemDevice(addr+i);
 				}
 				if (interface.cleanup) {
