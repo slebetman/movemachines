@@ -77,7 +77,7 @@ device CALC "Calculator" {
 				"LED 4 & 5" nothing {LED7write lcd2} \
 				"Keypad" {CALCreadKeypad} {CALCwriteKeypad}] {
 				toplevel .calc
-				pack [canvas .calc.c -width 250 -height 70 -bg grey55]
+				pack [canvas .calc.c -width 250 -height 70 -bg grey35]
 				wm resizable .calc 0 0
 				LED7draw .calc.c lcd2.1 10 5
 				LED7draw .calc.c lcd2.0 50 5
@@ -151,7 +151,7 @@ device CALC "Calculator" {
 			set x2 [expr [lindex $coord 2] + $x]
 			set y2 [expr [lindex $coord 3] + $y]
 			$win create line $x1 $y1 $x2 $y2 \
-				-capstyle round -width 6 -fill grey -tags "$name $name.$n"
+				-capstyle round -width 6 -fill grey30 -tags "$name $name.$n"
 			incr n
 		}
 	}
@@ -182,40 +182,40 @@ device CALC "Calculator" {
 		if {$mode == 0} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr {$val & (1 << $x)}] != 0} {
-					.calc.c itemconfigure $name.0.$x -fill red
+					.calc.c itemconfigure $name.0.$x -fill white
 				} else {
-					.calc.c itemconfigure $name.0.$x -fill grey
+					.calc.c itemconfigure $name.0.$x -fill grey30
 				}
 			}
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr {$val & (1 << ($x+8))}] != 0} {
-					.calc.c itemconfigure $name.1.$x -fill red
+					.calc.c itemconfigure $name.1.$x -fill white
 				} else {
-					.calc.c itemconfigure $name.1.$x -fill grey
+					.calc.c itemconfigure $name.1.$x -fill grey30
 				}
 			}
 		} elseif {$mode == 1} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr {$val & (1 << $x)}] != 0} {
-					.calc.c itemconfigure $name.0.$x -fill red
+					.calc.c itemconfigure $name.0.$x -fill white
 				} else {
-					.calc.c itemconfigure $name.0.$x -fill grey
+					.calc.c itemconfigure $name.0.$x -fill grey30
 				}
 			}
 		} elseif {$mode == 2} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr {$val & (1 << ($x+8))}] != 0} {
-					.calc.c itemconfigure $name.1.$x -fill red
+					.calc.c itemconfigure $name.1.$x -fill white
 				} else {
-					.calc.c itemconfigure $name.1.$x -fill grey
+					.calc.c itemconfigure $name.1.$x -fill grey30
 				}
 			}
 		} elseif {$mode == 3} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr {$val & (1 << $x)}] != 0} {
-					.calc.c itemconfigure $name.0.$x -fill red
+					.calc.c itemconfigure $name.0.$x -fill white
 				} else {
-					.calc.c itemconfigure $name.0.$x -fill grey
+					.calc.c itemconfigure $name.0.$x -fill grey30
 				}
 			}
 		}

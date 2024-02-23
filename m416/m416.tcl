@@ -831,12 +831,12 @@ proc simUpdate {{unroll 0}} {
 		# This significantly speeds up simulation but increases the granularity
 		# of event processing.
 		if {$unroll == 0} {
-			for {set N 0} {$N < 127 && $sim} {incr N} {
+			for {set N 0} {$N < 20 && $sim} {incr N} {
 				simUpdate 1
 			}
 			after 1 simUpdate
 		}
-			showInst
+		showInst
 	} else {
 		showInst
 	}

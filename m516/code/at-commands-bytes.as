@@ -56,6 +56,57 @@ routine READ_CHAR {
 	return
 }
 
+// in: acu, out: acu
+routine MULT_TEN {
+	+b *a
+	+b acu
+	add acu // x2
+	add acu // x4
+	add acu // x8
+	add b   // +1
+	add b   // +1
+			//----
+			// 10
+	
+	*a b-
+	*a b-
+	return
+}
+
+// in: *a, out: acu
+routine PARSE_INT {
+	+b nil // keep the parsed value on top of stack
+
+:$$LOOP
+	// Check if character is between 0x30 and 0x39
+	acu a
+	sub lit 0x30
+	ifCARRY $$END
+
+	acu a
+	sub lit 0x40
+	ifCARRY $$NEXT else $$END
+
+:$$NEXT
+
+	acu b
+	call MULT_TEN
+	b acu
+
+	acu a
+	and lit 0x0f
+	add b
+	b acu
+
+	incr_reg *a
+
+	goto $$LOOP
+
+:$$END
+	acu b-
+	return
+}
+
 routine SAVE_BUFFER {
 	define $$temp m8
 

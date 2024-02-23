@@ -17,4 +17,4 @@
 
 newRam
 loadFile counter.416
-loadDevice {./devices/7 seg LED 16bit.dev} 0x200 0x201
+loadDevice {./devices/7 seg LED 16bit.dev} 0xf000 0xf001

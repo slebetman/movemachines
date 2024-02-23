@@ -85,7 +85,7 @@ device LED7 "7 segment LED" {
 	proc LED7write {name val {mode 0}} {
 		for {set x 0} {$x < 8} {incr x} {
 			if {[expr $val & (1 << $x)] != 0} {
-				.led7.c itemconfigure $name.$x -fill red
+				.led7.c itemconfigure $name.$x -fill "#ffaaaa"
 			} else {
 				.led7.c itemconfigure $name.$x -fill grey
 			}

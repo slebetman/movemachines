@@ -89,14 +89,14 @@ device LED7 "7 segment LED" {
 		if {$mode == 0} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr $val & (1 << $x)] != 0} {
-					.led7.c itemconfigure $name.0.$x -fill red
+					.led7.c itemconfigure $name.0.$x -fill "#ffaaaa"
 				} else {
 					.led7.c itemconfigure $name.0.$x -fill grey
 				}
 			}
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr $val & (1 << ($x+8))] != 0} {
-					.led7.c itemconfigure $name.1.$x -fill red
+					.led7.c itemconfigure $name.1.$x -fill "#ffaaaa"
 				} else {
 					.led7.c itemconfigure $name.1.$x -fill grey
 				}
@@ -104,7 +104,7 @@ device LED7 "7 segment LED" {
 		} elseif {$mode == 1} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr $val & (1 << $x)] != 0} {
-					.led7.c itemconfigure $name.0.$x -fill red
+					.led7.c itemconfigure $name.0.$x -fill "#ffaaaa"
 				} else {
 					.led7.c itemconfigure $name.0.$x -fill grey
 				}
@@ -112,7 +112,7 @@ device LED7 "7 segment LED" {
 		} elseif {$mode == 2} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr $val & (1 << ($x+8))] != 0} {
-					.led7.c itemconfigure $name.1.$x -fill red
+					.led7.c itemconfigure $name.1.$x -fill "#ffaaaa"
 				} else {
 					.led7.c itemconfigure $name.1.$x -fill grey
 				}
@@ -120,7 +120,7 @@ device LED7 "7 segment LED" {
 		} elseif {$mode == 3} {
 			for {set x 0} {$x < 8} {incr x} {
 				if {[expr $val & (1 << $x)] != 0} {
-					.led7.c itemconfigure $name.0.$x -fill red
+					.led7.c itemconfigure $name.0.$x -fill "#ffaaaa"
 				} else {
 					.led7.c itemconfigure $name.0.$x -fill grey
 				}
