@@ -35,32 +35,7 @@ function popupDialog (title, width, height, content) {
 		height = `${height + 18}px`;
 	}
 
-	let main = make('div', {
-		className: 'dialog',
-		style: {
-			width,
-			height,
-			top: `${y}px`,
-			left: `${x}px`,
-		}
-	});
-	let titleBar = make('div', {
-		className: 'dialog-title',
-	})
-	titleBar.innerHTML = title;
-	let closeBtn = make('btn', {
-		className: 'dialog-close',
-	})
-	closeBtn.innerText = '×';
-	titleBar.appendChild(closeBtn);
-	let container = make('div', {
-		className: 'dialog-container',
-	})
-	if (content) {
-		container.innerHTML = content;
-	}
-
-	titleBar.onpointerdown = (e) => {
+	const dragAndDrop = (e) => {
 		let origin = {
 			x: x,
 			y: y,
@@ -91,25 +66,43 @@ function popupDialog (title, width, height, content) {
 		}
 	}
 
-	main.close = () => {
-		console.log('close!');
-		if (main.isConnected) {
-			document.body.removeChild(main);
-			if (main.onunload) {
-				main.onunload();
+	let main = make.div({
+		className: 'dialog',
+		style: {
+			width,
+			height,
+			top: `${y}px`,
+			left: `${x}px`,
+		},
+		close: () => {
+			console.log('close!');
+			if (main.isConnected) {
+				document.body.removeChild(main);
+				if (main.onunload) {
+					main.onunload();
+				}
 			}
 		}
-	}
-
-	closeBtn.onpointerdown = (e) => {
-		main.close();
-
-		e.stopPropagation();
-		e.preventDefault();
-	}
-
-	main.appendChild(titleBar);
-	main.appendChild(container);
+	},
+	[
+		make.div({
+			className: 'dialog-title',
+			onpointerdown: dragAndDrop
+		},[
+			make('span',{},title),
+			make('btn', {
+				className: 'dialog-close',
+				onpointerdown: (e) => {
+					main.close();
+					e.stopPropagation();
+					e.preventDefault();
+				}
+			},'×')
+		]),
+		make.div({
+			className: 'dialog-container',
+		},content)
+	]);
 
 	document.body.appendChild(main);
 

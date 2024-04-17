@@ -1,6 +1,6 @@
 let eCache = {};
 
-function make (type, prop) {
+function make (type, prop, children) {
     let e = document.createElement(type);
 
     if (prop) {
@@ -17,8 +17,21 @@ function make (type, prop) {
         }
     }
 
+    if (children) {
+        if (typeof children === 'string') {
+            e.innerHTML = children;
+        }
+        else {
+            for (let c of children) {
+                e.appendChild(c);
+            }
+        }
+    }
+
     return e;
 }
+
+make.div = (prop, children) => make('div', prop, children);
 
 function get (id) {
 	if (!eCache[id]) {
