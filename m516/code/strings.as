@@ -355,7 +355,7 @@ macro bytestrstart $NEEDLE $HAYSTACK {
 		// Check if end of NEEDLE
 		acu *b
 		sub lit 2
-		if ifHighEnd acu $$END_TRUE
+		ifHighEnd acu $$END_TRUE
 
 		// Increment HAYSTACK
 		acu *b
