@@ -418,7 +418,8 @@ if {[catch {
 		set linecount 1
 		foreach x $code {
 			set x [string trim $x]
-			if {$x == "" || $x == "\{\}"} {
+
+			if {$x == "" || [regsub -all {[{} ]} $x ""] == ""} {
 				# skip empty lines
 				continue
 			}
@@ -484,7 +485,7 @@ if {[catch {
 					}
 				}
 			} err]} {
-				error "$fname, line $linecount: $err"
+				error "(0) $fname, line $linecount: $err"
 			}
 			incr linecount
 		}
@@ -493,7 +494,7 @@ if {[catch {
 	set asm [substLabels $asm]
 	set prevInstGen ""
 	foreach inst [string trim $asm] {
-		puts -nonewline "$loc [codeGen $inst] ;"
+		puts -nonewline "[format 0x%04x $loc] [codeGen $inst] ;"
 		if {[string is integer -strict $inst] &&
 			($inst & 0x8000)
 		} {

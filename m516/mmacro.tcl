@@ -333,7 +333,7 @@ namespace eval mmacro {
 		
 		eachline line $fname {
 			if {[catch {parseLine $line} line]} {
-				error "$fname, line $i: $line"
+				error "(1) $fname, line $i: $line"
 			}
 			
 			# Handle includes here:
@@ -354,7 +354,7 @@ namespace eval mmacro {
 			foreach line [split $line \n] {
 				if {[string trim $line] != ""} {
 					if {[catch {uplevel 1 $script} line]} {
-						error "$fname, line $i: $line"
+						error "(2) $fname, line $i: $line"
 					}
 					append ret "$line\n"
 				}
